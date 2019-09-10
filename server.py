@@ -15,4 +15,6 @@ while True:
 	var = struct.unpack('iiii?',data)
 	t = var[1]
 	t = time.ctime(t)
+	packAck=struct.pack('ii',var[0],var[2]) 
+	sock.sendto(packAck, (UDP_IP, UDP_PORT))
 	print "received message:", var[0], t, var[2], var[3], var[4]
