@@ -3,8 +3,8 @@ import struct
 import time
 import random
 
-UDP_IP = "127.0.0.1"
-UDP_PORT = 5005
+UDP_IP = "10.1.138.73"
+UDP_PORT = 65432
 SHOCK_ID = 0x04
 MOV_ID = 0x01
 KEEP_ALIVE = 0x0
@@ -27,4 +27,16 @@ var = struct.pack('iiii?',randomId,date,sensorId,code,data)
 
 sock = socket.socket(socket.AF_INET, # Internet
                      socket.SOCK_DGRAM) # UDP
+sock.bind(("0.0.0.0", UDP_PORT))
+
 sock.sendto(var, (UDP_IP, UDP_PORT))
+
+data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
+ACK = struct.unpack('ii', data)
+
+if randomId == ACK[0] :
+	print "Mensaje enviado y recibido correctamente"
+else :
+	print "Mensaje enviado y recibido incorrectamente"
+
+print "received message:", ACK[0], ACK[1]
