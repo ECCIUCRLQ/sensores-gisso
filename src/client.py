@@ -23,7 +23,6 @@ sensorId = SHOCK_ID
 code = KEEP_ALIVE
 data = True
 
-
 var = struct.pack(FORMAT,randomId,date,TEAM_ID,0,0,sensorId,code,data) 
 
 sock = socket.socket(socket.AF_INET, # Internet
