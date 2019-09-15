@@ -6,8 +6,8 @@ MINE = "10.1.137.9"
 
 UDP_PORT = 10001
 FORMAT = 'BiBBBBBf'
-ListaIdGrupo=["Whitenoise","FlamingoBlack","GISSO","kof","Equipo 404","Poffis"]
-listaSensores=["KeepAlive","Movimiento","BigSound","Luz","Shock","Touch","Humedad","BigSound","Temperatura"]
+ListaIdGrupo=["Whitenoise","FlamingoBlack","GISSO","KOF","Equipo 404","Poffis"]
+listaSensores=["KeepAlive","Movimiento","Sonido","Luz","Shock","Touch","Humedad","BigSound","Temperatura","Ultrasonico"]
 
 sock = socket.socket(socket.AF_INET, # Internet
                      socket.SOCK_DGRAM) # UDP
