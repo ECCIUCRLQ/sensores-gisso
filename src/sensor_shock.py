@@ -1,11 +1,13 @@
-# needed modules will be imported
 import RPi.GPIO as GPIO
 import time
-  
-channel = 17 
+from ipcqueue import sysvmq
+
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(channel, GPIO.IN)
-  
+
+
+date = int( time.time() )  
+q = sysvmq.Queue(2) 
   
 # The input pin of the Sensor will be declared. Additional to that the pullup resistor will be activated.
 
@@ -15,8 +17,9 @@ print ("Sensor-Test [press ctrl+c to end it]")
 def callback(channel):
   if GPIO.input(channel):
     print("Signal detected")
+    q.put(int(time.time()))
   else:
-    print("Holis2")
+    q.put(0)
   
 # At the moment of detecting a Signal ( falling signal edge ) the output function will be activated.
 GPIO.add_event_detect(channel, GPIO.BOTH, bouncetime=300) 
