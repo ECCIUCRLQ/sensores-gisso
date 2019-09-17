@@ -5,10 +5,10 @@ import time
 from ipcqueue import sysvmq
 
                                       #Import time library
-GPIO.setmode(GPIO.BOARD)                          #Set GPIO pin numbering
-pir = 26                                          #Associate pin 26 to pir
+GPIO.setmode(GPIO.BCM)                          #Set GPIO pin numbering
+pir = 27                                          #Associate pin 26 to pir
 GPIO.setup(pir, GPIO.IN)   
-q = sysvmq.Queue(1)                       #Set pin as GPIO in 
+q = sysvmq.Queue(3)                       #Set pin as GPIO in 
 
 #print "Waiting for sensor to settle"
 #time.sleep(2)                                     #Waiting 2 seconds for the sensor to initiate
@@ -21,5 +21,5 @@ while True:
 		q.put(int(time.time()))
 	else :
 		q.put(0)  
-		                             #D1- Delay to avoid multiple detection
+									 #D1- Delay to avoid multiple detection
 	time.sleep(1)                                #While loop delay should be less than detection(hardware) dela
