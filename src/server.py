@@ -2,7 +2,7 @@ import socket
 import struct 
 import time
 
-MINE = "10.1.137.9"
+MINE = "10.1.138.139"
 
 UDP_PORT = 10001
 FORMAT = 'BiBBBBBf'
@@ -20,4 +20,9 @@ while True:
 	t = time.ctime(t)
 	packAck=struct.pack('BBBBB',var[0],var[2],0,0, var[5]) 
 	sock.sendto(packAck, (addr))
-	print ("received message from group:", ListaIdGrupo[var[2]-1], " sensor: ", listaSensores[var[5]], " with: ", var[0], t, var[2], var[3], var[4] )
+	print ("Mensaje recibido de: "+ str(ListaIdGrupo[var[2]-1]) )
+	print ("Sensor: "+ str(listaSensores[var[5]]) )
+	print ("Numero Secuencia: "+ str(var[0]))
+	print ("Fecha: " + str(t))
+	print ("Dato: " + str(var[7]))
+	print ("----------------------------------------------------------")
