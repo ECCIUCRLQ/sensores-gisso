@@ -6,9 +6,9 @@ from ipcqueue import sysvmq
 
                                       #Import time library
 GPIO.setmode(GPIO.BCM)                          #Set GPIO pin numbering
-pir = 27                                          #Associate pin 26 to pir
+pir = 17                                          #Associate pin 26 to pir
 GPIO.setup(pir, GPIO.IN)   
-q = sysvmq.Queue(3)                       #Set pin as GPIO in 
+q = sysvmq.Queue(2)                       #Set pin as GPIO in 
 
 #print "Waiting for sensor to settle"
 #time.sleep(2)                                     #Waiting 2 seconds for the sensor to initiate

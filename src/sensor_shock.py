@@ -2,13 +2,13 @@ import RPi.GPIO as GPIO
 import time
 from ipcqueue import sysvmq
 
-channel = 17
+channel = 27
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(channel, GPIO.IN)
 
 
 date = int( time.time() )  
-q = sysvmq.Queue(4) 
+q = sysvmq.Queue(1) 
   
 # The input pin of the Sensor will be declared. Additional to that the pullup resistor will be activated.
 
@@ -33,6 +33,7 @@ while True:
     q.put(int(time.time()))
   else:
     q.put(0)
+    
   time.sleep(1)
   
 # Scavenging work after the end of the program
