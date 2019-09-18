@@ -1,25 +1,20 @@
-#taken from https://electrosome.com/pir-motion-sensor-hc-sr501-raspberry-pi/
+#Taken from https://electrosome.com/pir-motion-sensor-hc-sr501-raspberry-pi/
 
-import RPi.GPIO as GPIO                           #Import GPIO library
+import RPi.GPIO as GPIO                         # Biblioteca para detectar los pines del Pi
 import time 
-from ipcqueue import sysvmq
+from ipcqueue import sysvmq						# Biblioteca para el buzon
 
-                                      #Import time library
-GPIO.setmode(GPIO.BCM)                          #Set GPIO pin numbering
-pir = 17                                          #Associate pin 26 to pir
-GPIO.setup(pir, GPIO.IN)   
-q = sysvmq.Queue(2)                       #Set pin as GPIO in 
-
-#print "Waiting for sensor to settle"
-#time.sleep(2)                                     #Waiting 2 seconds for the sensor to initiate
-#print "Detecting motion"
-
+                                    
+GPIO.setmode(GPIO.BCM)                        	  # Numeros del GPIO del pin
+pir = 17                                          # Asociar pin 17 a pir
+GPIO.setup(pir, GPIO.IN)   						  # Asignar el pin
+q = sysvmq.Queue(2)                     		  # Crea el buzon con la llave 2
 
 while True:
-	if GPIO.input(pir):                            #Check whether pir is HIGH
+	if GPIO.input(pir):   						# Si detecto actividad en ese pin                        
 		print "Motion Detected!"
-		q.put(int(time.time()))
+		q.put(int(time.time()))					# Agrega el tiempo en que se detecto al buzon
 	else :
-		q.put(0)  
-									 #D1- Delay to avoid multiple detection
-	time.sleep(1)                                #While loop delay should be less than detection(hardware) dela
+		q.put(0)  								# Agrega 0 al buzon indicando que no se detecto movimiento, seria el keepalive
+									
+	time.sleep(1)                              	# Espera 1 segundo.

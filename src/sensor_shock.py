@@ -2,41 +2,20 @@ import RPi.GPIO as GPIO
 import time
 from ipcqueue import sysvmq
 
-channel = 27
+pir = 27
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(channel, GPIO.IN)
+GPIO.setup(pir, GPIO.IN)
 
 
 date = int( time.time() )  
-q = sysvmq.Queue(1) 
-  
-# The input pin of the Sensor will be declared. Additional to that the pullup resistor will be activated.
-
-print ("Sensor-Test [press ctrl+c to end it]")
-  
-# This output function will be started at signal detection
-#def callback(channel):
-#  if GPIO.input(channel):
-#    print("Signal detected")
-#    q.put(int(time.time()))
-#  else:
-#    q.put(0)
-  
-# At the moment of detecting a Signal ( falling signal edge ) the output function will be activated.
-#GPIO.add_event_detect(channel, GPIO.BOTH, bouncetime=300) 
-#GPIO.add_event_callback(channel, callback) 
-# main program loop
+q = sysvmq.Queue(1) 						# Crea el buzon con la llave 1
 
 while True:
-  if GPIO.input(channel):
+  if GPIO.input(pir):						# Si detecto actividad en ese pin  
     print("Signal detected")
-    q.put(int(time.time()))
+    q.put(int(time.time()))					# Agrega el tiempo en que se detecto al buzon
   else:
-    q.put(0)
+    q.put(0)								# Agrega 0 al buzon indicando que no se detecto movimiento, seria el keepalive
     
-  time.sleep(1)
+  time.sleep(1)								# Espera 1 segundo.
   
-# Scavenging work after the end of the program
-#except KeyboardInterrupt:
- #       GPIO.cleanup()
-
