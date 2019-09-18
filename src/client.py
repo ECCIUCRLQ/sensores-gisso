@@ -53,42 +53,44 @@ def enviar(var):
 				#print ("Sensor =", ACK[4])
 				#print ("--------------------------\n")
 				
-			
-				
-while True: 
+def getRandom():
 	randomId= random.randint(0,255)
 	while(randomId == lastRandomId):
-		randomId = random.randint(0,255)
+		randomId = random.randint(0,255) 			
+				
+while True: 
 		
 	dateshock = shock.get()
 	if dateshock == 0 :
+		getRandom()
 		date = int(time.time())
 		print ("Shock ",dateshock)
-		packshock = struct.pack(FORMAT,randomId,date,TEAM_ID,0,0,SHOCK_ID,KEEP_ALIVE,0.0)
+		packshock = struct.pack(FORMAT,randomId,date,TEAM_ID,0,0,2,KEEP_ALIVE,0.0)
 		enviar(packshock)
+		lastRandomId = randomId
 	
 	else: 
+		getRandom()
 		print ("Shock ",dateshock)
-		packshock = struct.pack(FORMAT,randomId,dateshock,TEAM_ID,0,0,SHOCK_ID,BOOL_TYPE,1.0)
+		packshock = struct.pack(FORMAT,randomId,dateshock,TEAM_ID,0,0,2,SHOCK_ID,1.0)
 		enviar(packshock)
+		lastRandomId = randomId
 		
-	lastRandomId = randomId
-	
-	randomId= random.randint(0,255)
-	while(randomId == lastRandomId):
-		randomId = random.randint(0,255)	
 	
 	datemov = mov.get()
 	if datemov == 0 :
+		getRandom()
 		date = int(time.time())
 		print ("Mov ",datemov)
-		packmov = struct.pack(FORMAT,randomId,date,TEAM_ID,0,0,MOV_ID,KEEP_ALIVE,0)
+		packmov = struct.pack(FORMAT,randomId,date,TEAM_ID,0,0,1,KEEP_ALIVE,0)
 		enviar(packmov)
+		lastRandomId = randomId
 	
 	else: 
+		getRandom()
 		print ("Mov ",datemov)
-		packmov = struct.pack(FORMAT,randomId,datemov,TEAM_ID,0,0,MOV_ID,BOOL_TYPE,1.0)
+		packmov = struct.pack(FORMAT,randomId,datemov,TEAM_ID,0,0,1,MOV_ID,1.0)
 		enviar(packmov)
+		lastRandomId = randomId
 		
-	lastRandomId = randomId	
 	time.sleep(1)	
