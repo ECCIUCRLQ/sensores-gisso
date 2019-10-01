@@ -17,8 +17,23 @@ Una vez que cada equipo se hafamiliarizado con el sistema operativo, deberán co
 Raspberry Pi con el objetivo de obtener datos.En esta fasecada equipo tomará los datos generados por los sensores y los 
 enviará a un proceso recolector que se estará ejecutando en un dispositivo diferente(otro Raspberry Pi). Para ello todos 
 los equipos deberán diseñar e implementar un mismo protocolo. 
+
 Al final de esta fase se espera que sin importar el sensor que se esté usando, el proceso recolector de cada equipo deberá ser 
 compatible con todos los sensores. 
+
+<p align="center">
+  <img src="https://imgur.com/Hugfuy2.png"">
+</p>
+
+## Etapa 2
+
+En esta fase se espera que además de recolectar los datos generados por los sensores, también sea posible acumularlos datos un tiempo predefinido (recolector con memoria local). Por ejemplo, en esta fase debe ser posible tomar todos los datos de un sensor de temperatura y almacenarlos en un lugar de memoria específico. Para ello, cada equipo deberá implementar un sistema de asignación de memoria basado en el uso de páginas que permita guardarlas temporalmente en memoria. En cada página se almacenarán los datos obtenidos de los sensores, organizados de alguna forma definida por el equipo. Esto implica diseñar un sistema de administración de memoria para asignar dichas páginas. 
+
+Finalmente, se tendrá un graficador que debe poder solicitar todos los datos de un sensor específico y generar un gráfico con dicha información. Para efectos prácticos, el graficador no conoce ni necesita conocer la estrategia de asignación de memoria implementada. 
+
+<p align="center">
+  <img src="https://imgur.com/Iz3uyNp.png"">
+</p>
 
 ### Recursos
 
