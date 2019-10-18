@@ -1,29 +1,28 @@
-#Tomado de https://elrobotista.com/grafica-sensores-tiempo-real/
-
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
-import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
  
-COUNT = 100
-fig, ax = plt.subplots()
-line, = ax.plot([], [])
-ax.set_ylim([-1.5, 1.5])
-ax.set_xlim(0, COUNT)
-xdata = []
-ydata = [] 
-def next():
-   i = 0
-   while i &lt != COUNT:
-      i += 1
-      yield i
-def update(i):
-   xdata.append(i)
-   y = np.sin(i / 10.)
-   ydata.append(y)
-   line.set_data(xdata, ydata)
-   return line,
+plt.style.use('fivethirtyeight')
  
-if __name__ == '__main__':
-   a = animation.FuncAnimation(fig, update, next, blit = False, interval = 60,
-                               repeat = False)
-   plt.show()
+ages = [52, 18, 19, 21, 25, 26, 26, 30, 32, 38, 45, 55]
+ 
+bins = [10,20,30,40,50,60]
+ 
+plt.hist(ages, bins=bins, edgecolor='black')
+ 
+# data = pd.read_csv('data.csv')
+# ids = data['Responder_id']
+# ages = data['Age']
+ 
+# median_age = 29
+# color = '#fc4f30'
+ 
+# plt.legend()
+plt.title('This is the title')
+plt.title('Actividad de Sensores')
+plt.xlabel('Tiempo (h)')
+plt.ylabel('Promedio total de detecciones')
+ 
+ 
+plt.tight_layout()
+ 
+plt.show()
