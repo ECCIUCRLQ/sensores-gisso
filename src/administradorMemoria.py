@@ -27,7 +27,16 @@ def pasarPaginaMPrincipalSecundaria(pagSwap):
 						quotechar='|', quoting=csv.QUOTE_MINIMAL)
 			filewriter.writerow(memoriaPrincipal[pagSwap])
 	#Esto es para borrar en memoria principal
-		memoriaPrincipal[pagSwap].clear()	
+		memoriaPrincipal[pagSwap].clear()
+def pasarPaginaMSecundariaPrincipal(pagSwap,numP):
+		#Para buscar la pagina deseada en memoria principal
+			arregloTemporal = []
+			nombrePagina=str(numP)+".csv"
+			with open(nombrePagina, 'rb') as csvfile:
+				arregloTemporal = list(csv.reader(csvfile))
+			 #Para colocar la pagina en memoria principal
+			memoriaPrincipal[pagSwap].append(arregloTemporal)
+	
 #Habilitarle una pagina a un proceso y la coloca en la memoria principal     
 def habilitarPagina(tamanoPagina):
 	numPagina = getNumeroPagina()
@@ -86,15 +95,8 @@ def pedirPagina(numeroP):
 			
 			
 			pasarPaginaMPrincipalSecundaria(pagSwap)
-			#Para buscar la pagina deseada en memoria principal
-			arregloTemporal = []
-			with open('archivo.csv', 'rb') as f:
-				reader = csv.reader(f)
-				for row in reader:
-					arregloTemporal.append(row[0])
-			 #Para colocar la pagina en memoria principal
-			memoriaPrincipal[pagSwap].append(arregloTemporal)
-			 
+			
+			pasarPaginaMSecundariaPrincipal(pagSwap,numeroP)
 			 #Se toma de la memoria la pagina deseada
 			paginaADevolver = memoriaPrincipal[pagSwap][:]
 				
@@ -139,14 +141,7 @@ def guardar(pack,numP):
 				pagSwap=random.randint(0,13)				
 			
 			pasarPaginaMPrincipalSecundaria(pagSwap)
-			#Para buscar la pagina deseada en memoria principal
-			arregloTemporal = []
-			with open('archivo.csv', 'rb') as f:
-				reader = csv.reader(f)
-				for row in reader:
-					arregloTemporal.append(row[0])
-			 #Para colocar la pagina en memoria principal
-			memoriaPrincipal[pagSwap].append(arregloTemporal)
+			pasarPaginaMSecundariaPrincipal(pagSwap,numP)
 			#Para guardar
 			memoriaPrincipal[pagSwap].append(pack)
 			
