@@ -5,7 +5,7 @@ import threading
 from ipcqueue import sysvmq # Biblioteca para los buzones.
 
 
-MINE = "0.0.0.0"
+MINE = "172.31.47.185"
 
 UDP_PORT = 10001
 FORMAT = 'BIBBBBBf'
@@ -27,22 +27,24 @@ def correr(nombre):
 	buz =sysvmq.Queue(nombre)	#crea buzon 
 	while True:
 		print(nombre)
-		time.sleep(2)
+		#time.sleep(2)
 		pack = buz.get()
-		info = struct.unpack(FORMAT,pack)
-		if( inf[2]== 5 and (info[6] == 6 or info[6] == 8 ):	
+		print (pack)
+		#info = struct.unpack('BIBBBBBf',pack)
+		
+		if( pack[2]== 5 and (pack[6] == 6 or pack[6] == 8) ):	
 			tipoDato = 2 #Tipo dato 2 es flotante
-			infoUtil = struct.pack('IIfB',sid,info[1],info[7],tipoDato)
+			infoUtil = struct.pack('IIfB',sid,pack[1],pack[7],tipoDato)
 			buzComun.put(infoUtil)
 		
-		elif ( info[2] == 6):
+		elif ( pack[2] == 6):
 			tipoDato = 1 #Tipo dato 1 es entero
-			infoUtil = struct.pack('IIfB',sid,info[1],info[7],tipoDato)
+			infoUtil = struct.pack('IIfB',sid,pack[1],pack[7],tipoDato)
 			buzComun.put(infoUtil)
 		
 		else:
 			tipoDato = 0 #Tipo dato 0 es booleano
-			infoUtil = struct.pack('IIfB',sid,info[1],info[7],tipoDato)
+			infoUtil = struct.pack('IIfB',sid,pack[1],pack[7],tipoDato)
 			buzComun.put(infoUtil)
 			
 sock = socket.socket(socket.AF_INET, # Creacion del socket
