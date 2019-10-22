@@ -21,18 +21,30 @@ def crearThread(identificador):
 	x.start()
 	
 def correr(nombre):
-	sid = nombre
+	buzComun = sysvmq.Queue(420)
+	sid = nombre #Identificador
 	print("Corriendo: " + str(sid))
 	buz =sysvmq.Queue(nombre)	#crea buzon 
 	while True:
 		print(nombre)
 		time.sleep(2)
 		pack = buz.get()
-		info = struct.unpack(FORMAT,pack)	
-		infoUtil = struct.pack('BBf',nombre,info[1],info[7])
-		#nuevo_buzon.put(infoUtil)
+		info = struct.unpack(FORMAT,pack)
+		if( inf[2]== 5 and (info[6] == 6 or info[6] == 8 ):	
+			tipoDato = 2 #Tipo dato 2 es flotante
+			infoUtil = struct.pack('IIfB',sid,info[1],info[7],tipoDato)
+			buzComun.put(infoUtil)
 		
-
+		elif ( info[2] == 6):
+			tipoDato = 1 #Tipo dato 1 es entero
+			infoUtil = struct.pack('IIfB',sid,info[1],info[7],tipoDato)
+			buzComun.put(infoUtil)
+		
+		else:
+			tipoDato = 0 #Tipo dato 0 es booleano
+			infoUtil = struct.pack('IIfB',sid,info[1],info[7],tipoDato)
+			buzComun.put(infoUtil)
+			
 sock = socket.socket(socket.AF_INET, # Creacion del socket
                      socket.SOCK_DGRAM) 
 sock.bind((MINE, UDP_PORT))# Se establece la conexion
