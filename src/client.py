@@ -5,8 +5,8 @@ import random
 import select
 from ipcqueue import sysvmq # Biblioteca para los buzones.
 
-UDP_IP = "10.1.137.9" 	#IP a enviar
-MINE = "10.1.138.117"   # Mi ip, para el bind
+UDP_IP = "192.168.5.75" 	#IP a enviar
+MINE = "192.168.1.65"   # Mi ip, para el bind
 
 UDP_PORT = 10001
 

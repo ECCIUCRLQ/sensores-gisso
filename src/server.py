@@ -2,7 +2,7 @@ import socket
 import struct 
 import time
 
-MINE = "10.1.137.9"
+MINE = "0.0.0.0"
 
 UDP_PORT = 10001
 FORMAT = 'BIBBBBBf'

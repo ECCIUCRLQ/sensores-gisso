@@ -2,9 +2,10 @@ import socket
 import struct 
 import time
 import threading 
+from ipcqueue import sysvmq # Biblioteca para los buzones.
 
 
-MINE = "10.1.138.56"
+MINE = "0.0.0.0"
 
 UDP_PORT = 10001
 FORMAT = 'BIBBBBBf'
@@ -15,22 +16,21 @@ diccionario = {}
 def crearThread(identificador):
 	
 	x = threading.Thread(target=correr, args=(identificador,))
-	#buz =sysvmq.Queue(identificador)	crea buzon 
-	buz = identificador
+	buz =sysvmq.Queue(identificador)	#crea buzon 
 	diccionario.setdefault(identificador,buz) # z=key del buzon
 	x.start()
 	
 def correr(nombre):
 	sid = nombre
 	print("Corriendo: " + str(sid))
-	#buz =sysvmq.Queue(nombre)	crea buzon 
+	buz =sysvmq.Queue(nombre)	#crea buzon 
 	while True:
 		print(nombre)
 		time.sleep(2)
-		# ~ pack = buz.get()
-		# ~ info = struct.unpack(FORMAT,pack)	
-		# ~ infoUtil = struct.pack('BBf',nombre,info[1],info[7])
-		#nuevo buzon.put(infoUtil)
+		pack = buz.get()
+		info = struct.unpack(FORMAT,pack)	
+		infoUtil = struct.pack('BBf',nombre,info[1],info[7])
+		#nuevo_buzon.put(infoUtil)
 		
 
 sock = socket.socket(socket.AF_INET, # Creacion del socket
@@ -50,6 +50,7 @@ sock.bind((MINE, UDP_PORT))# Se establece la conexion
 
 while True:
 	data, addr = sock.recvfrom(50) # buffer size
+	print ("LLego algo")
 	var = struct.unpack(FORMAT,data) # Desempaqueta los datos recibidos
 	t = var[1]	# Fecha que se detecto 
 	t = time.ctime(t)	# Cambio de formato
