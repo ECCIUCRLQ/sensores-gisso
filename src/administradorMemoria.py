@@ -34,7 +34,7 @@ def pasarPaginaMSecundariaPrincipal(pagSwap,numP):
 	with open(nombrePagina, 'rb') as csvfile:
 		arregloTemporal = list(csv.reader(csvfile))
 	 #Para colocar la pagina en memoria principal
-	memoriaPrincipal[pagSwap].append(arregloTemporal)
+	memoriaPrincipal[pagSwap].append(arregloTemporal[0])
 	
 	
 def busquedaPaginaSwap():
@@ -64,7 +64,7 @@ def busquedaPaginaMemoriaPrincipal(numPABuscar):
 		if(memoriaPrincipal[i][0]==numPABuscar):
 			indiceARetornar=numPABuscar
 			paginaEncontrada=True
-			i+=1
+		i+=1
 	return indiceARetornar
 			
 			
@@ -105,19 +105,22 @@ def pedirPagina(numeroP):
 				
 	return paginaADevolver
 	
-		
+def paginallenaMemoriaPrincipal(indiceP):
+	paginallena=False
+	if(memoriaPrincipal[indiceP][1] == 5):
+		if(len(memoriaPrincipal[indiceP]) == max5):
+			paginaLlena = True
+	elif(memoriaPrincipal[indiceP][1] == 8):
+		if(len(memoriaPrincipal[indiceP]) == max8):
+			paginaLlena = True
+	return paginallena
+	
 def guardar(pack,numP):
 	global numeroFilas, memoriaPrincipal,max5,max8
-	paginaLlena=False
+	numeroPag=-1
 	indiceP=busquedaPaginaMemoriaPrincipal(numP)
 	if(indiceP!=-1):
-		#Para por ver si esta llena o no
-		if(memoriaPrincipal[indiceP][1] == 5):
-			if(len(memoriaPrincipal[indiceP]) == max5):
-				paginaLlena = True
-		elif(memoriaPrincipal[indiceP][1] == 8):
-			if(len(memoriaPrincipal[indiceP]) == max8):
-				paginaLlena = True
+		paginaLlena=paginallenaMemoriaPrincipal(indiceP)
 		#Si tiene espacio
 		if(paginaLlena==False):
 			#Guarda el dato
@@ -128,14 +131,21 @@ def guardar(pack,numP):
 			#Ver en que posicion de memoria principal quedo, y luego ya se puede guardar
 			indiceP=busquedaPaginaMemoriaPrincipal(pagNueva)
 			memoriaPrincipal[indiceP].append(pack)
+			numeroPag=pagNueva
 	else:
 		indMemSwap=busquedaPaginaSwap()
 		pasarPaginaMPrincipalSecundaria(indMemSwap)
 		pasarPaginaMSecundariaPrincipal(indMemSwap,numP)
-		#Para guardar
-		memoriaPrincipal[indMemSwap].append(pack)
-
-			
+		paginaLlena=paginallenaMemoriaPrincipal(indMemSwap)
+		if(paginaLlena==False):
+			#Para guardar
+			memoriaPrincipal[indMemSwap].append(pack)
+		else:
+			pagNueva=habilitarPagina(memoriaPrincipal[indMemSwap][1])
+			indMemSwap=busquedaPaginaMemoriaPrincipal(pagNueva)
+			memoriaPrincipal[indMemSwap].append(pack)
+			numeroPag=pagNueva
+	return numeroPag
 		
 #print(habilitarPagina(5))
 #print(memoriaPrincipal)
