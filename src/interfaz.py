@@ -2,7 +2,7 @@ import csv
 import struct
 import time
 import random
-import administradorMemoria as aMemoria
+#import administradorMemoria as aMemoria
 from ipcqueue import sysvmq
 import threading
 pageTable=[]
@@ -26,6 +26,7 @@ def mallocMaravilloso(sensorId,tamanoPagina): #Agrego en la page table y despues
 	global pageTable,tamanoPT					#Y despues meto el numero de pagina en la page table 
 	pageTable.append([])
 	pageTable[tamanoPT].append(sensorId)
+	print(pageTable)
 	buzonLlamados.put(0)
 	buzonParametros.put(tamanoPagina)
 	nuevaPag=buzonRetornos.get()
@@ -62,6 +63,7 @@ def buscarSensorId(sensorId):#Busco el sensorId en la page table y me retorna el
 	global pageTable,tamanoPT
 	indice=-1
 	i=0
+	hallado=False
 	while(i<tamanoPT and hallado==False):
 		if(pageTable[i][0]==sensorId):
 			indice=i
@@ -69,24 +71,25 @@ def buscarSensorId(sensorId):#Busco el sensorId en la page table y me retorna el
 	return indice
 			
 def getSensorId(pack):#Desempaqueta y retorna el sensor id
-	var = struct.unpack(FORMAT,data) # Desempaqueta los datos recibidos
+	var = struct.unpack(FORMAT,pack) # Desempaqueta los datos recibidos
 	identificador=var[0]
 	return identificador
 	
 def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
-	var = struct.unpack(FORMAT,data) # Desempaqueta los datos recibidos
+	var = struct.unpack(FORMAT,pack) # Desempaqueta los datos recibidos
 	datoAleer=var[3]
+	packUtil=0
 	if(datoAleer==0):
-		packUtil=struct.pack('I?',2,var[1],var[2])
+		packUtil=struct.pack('I?',var[1],var[2])
 	elif(datoAleer==1):
-		packUtil=struct.pack('II',2,var[1],var[2])
+		packUtil=struct.pack('II',var[1],var[2])
 	elif(datoAleer==2):
-		packUtil=struct.pack('If',2,var[1],var[2])
+		packUtil=struct.pack('If',var[1],var[2])
 	return packUtil
 
 def getTamanoPag(pack):
 	tamPagina=0
-	var = struct.unpack(FORMAT,data) # Desempaqueta los datos recibidos
+	var = struct.unpack(FORMAT,pack) # Desempaqueta los datos recibidos
 	datoAleer=var[3]
 	if(datoAleer==0):
 		tamPagina=5
@@ -103,6 +106,7 @@ def guardar(pack):#Busca el sensor ID, sino esta entonces lo agrega a la page ta
 	packDatos=datoUtil(pack)
 	buzonLlamados.put(2)
 	buzonParametros.put(packDatos)
+	print(pageTable[ind][len(pageTable[ind])-1])
 	buzonParametros.put(pageTable[ind][len(pageTable[ind])-1])
 	numP=buzonRetornos.get()
 	#numP=aMemoria.guardar(packDatos)
@@ -110,12 +114,14 @@ def guardar(pack):#Busca el sensor ID, sino esta entonces lo agrega a la page ta
 		pageTable[ind].append(numP)
 	
 while(True):
-
-	try:	
-		packRecolector = buzonGeneral.get_nowait() # get_nowait() revisa el buzon, si esta vacio no pasa nada, y sino recibe el dato para enviarlo
-		guardar(packRecolector)
-	except:
-		pass
+	packRecolector = buzonGeneral.get()
+	time.sleep(1)
+	guardar(packRecolector)
+	#try:	
+		#packRecolector = buzonGeneral.get_nowait() # get_nowait() revisa el buzon, si esta vacio no pasa nada, y sino recibe el dato para enviarlo
+		#guardar(packRecolector)
+	#except:
+		#pass
 		
 		
 	

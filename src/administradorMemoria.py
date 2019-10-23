@@ -28,13 +28,15 @@ def pasarPaginaMPrincipalSecundaria(pagSwap):
 					quotechar='|', quoting=csv.QUOTE_MINIMAL)
 		filewriter.writerow(memoriaPrincipal[pagSwap])
 	#Esto es para borrar en memoria principal
-	memoriaPrincipal[pagSwap].clear()
+	del memoriaPrincipal[pagSwap][:]
 	
 	
 def pasarPaginaMSecundariaPrincipal(pagSwap,numP):
 	global memoriaPrincipal
 	#Para buscar la pagina deseada en memoria principal
 	arregloTemporal = []
+	print("NumP",numP)
+	print("String",numP)
 	nombrePagina=str(numP)+".csv"
 	with open(nombrePagina, 'rb') as csvfile:
 		arregloTemporal = list(csv.reader(csvfile))
@@ -46,18 +48,26 @@ def busquedaPaginaSwap():
 	global memoriaPrincipal,max5,max8
 	pagSwapB = False
 	indMemSwap = -1
+	i=0
 	while(i<13 and pagSwapB == False):
-		if(memoriaPrincipal[i][1] == 5):
+		if(len(memoriaPrincipal[i])>0 and memoriaPrincipal[i][1] == 5):
 			if(len(memoriaPrincipal[i]) == max5):
 				pagSwapB = True
 				indMemSwap = i
-		elif(memoriaPrincipal[i][1] == 8):
+		elif(len(memoriaPrincipal[i])>0 and memoriaPrincipal[i][1] == 8):
 			if(len(memoriaPrincipal[i]) == max8):
 				pagSwapB = True
 				indMemSwap = i
 		i+=1
 	if(pagSwapB==False):
-		indMemSwap=random.randint(0,13)
+		vacio=True
+		while(vacio==True):
+			indMemSwap=random.randint(0,12)
+			if(len(memoriaPrincipal[indMemSwap])>0):
+				vacio=False
+		
+	print(memoriaPrincipal)
+	print("indice",indMemSwap)
 	return indMemSwap
 
 
@@ -65,8 +75,9 @@ def busquedaPaginaMemoriaPrincipal(numPABuscar):
 	global memoriaPrincipal
 	indiceARetornar=-1
 	paginaEncontrada=False
+	i=0
 	while(i<13 and paginaEncontrada==False):
-		if(memoriaPrincipal[i][0]==numPABuscar):
+		if(len(memoriaPrincipal[i]) > 0 and memoriaPrincipal[i][0]==numPABuscar):
 			indiceARetornar=numPABuscar
 			paginaEncontrada=True
 		i+=1
@@ -169,7 +180,7 @@ while(True):
 		parametro1=buzonParametros.get()
 		parametro2=buzonParametros.get()
 		numPage=guardar(parametro1,parametro2)
-		buzonRetornos.put(numPag)
+		buzonRetornos.put(numPage)
 	
 	
 		
