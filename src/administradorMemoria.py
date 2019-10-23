@@ -3,13 +3,18 @@ import struct
 import time
 import random
 from ipcqueue import sysvmq
-#Interfaz
 numeroPagina=0
 memoriaPrincipal=[]
 numeroFilas=13
 contadorFilaActual=0
 max8 = 10575
 max5 = 16920
+buzonLlamados=sysvmq.Queue(9)
+buzonRetornos=sysvmq.Queue(7)
+buzonParametros=sysvmq.Queue(3)
+#HabilitarPagina = 0
+#pedirPagina =1
+#guardar=2
 for i in range(numeroFilas):
     memoriaPrincipal.append([])
 
@@ -83,6 +88,8 @@ def habilitarPagina(tamanoPagina):
 		memoriaPrincipal[indMemSwap].append(numeroPagina)
 		numeroPagina += 1
 		memoriaPrincipal[indMemSwap].append(tamanoPagina)
+		
+	
 	return numeroPagina-1
 
 
@@ -102,7 +109,6 @@ def pedirPagina(numeroP):
 			pasarPaginaMSecundariaPrincipal(pagSwap,numeroP)
 			 #Se toma de la memoria la pagina deseada
 			paginaADevolver = memoriaPrincipal[indMemSwap][:]
-				
 	return paginaADevolver
 	
 def paginallenaMemoriaPrincipal(indiceP):
@@ -146,11 +152,27 @@ def guardar(pack,numP):
 			memoriaPrincipal[indMemSwap].append(pack)
 			numeroPag=pagNueva
 	return numeroPag
+	
+#NOTA:Antes de llamar a guardar se debe hacer un nuevo pack sin el codigo.
+while(True):
+	codigoLlamado=buzonLlamados.get()
+	if(codigoLlamado==0):
+		parametro=buzonParametros.get()
+		paginaHabilitada=habilitarPagina(parametro)
+		buzonRetornos.put(paginaHabilitada)
+	elif(codigoLlamado==1):
+		parametro=buzonParametros.get()
+		paginaADevolver=pedirPagina(parametro)
+		buzonRetornos.put(paginaADevolver)
 		
-#print(habilitarPagina(5))
-#print(memoriaPrincipal)
-#print(habilitarPagina(8))
-#print(memoriaPrincipal)		
+	elif(codigoLlamado==2):
+		parametro1=buzonParametros.get()
+		parametro2=buzonParametros.get()
+		numPage=guardar(parametro1,parametro2)
+		buzonRetornos.put(numPag)
+	
+	
+		
 		
 			
 
@@ -161,3 +183,4 @@ def guardar(pack,numP):
 			
 		
 	
+

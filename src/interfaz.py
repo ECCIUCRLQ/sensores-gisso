@@ -4,25 +4,36 @@ import time
 import random
 import administradorMemoria as aMemoria
 from ipcqueue import sysvmq
+import threading
 pageTable=[]
 tamanoPT=0
-FORMAT1='IBBBBf'
-FORMAT2='IBBBB?'
+FORMAT='IIfB' # IdentificadorSensor,fecha, dato,bit para verificar dato. 
 #Pedir datos, metodo que va a llamar el graficador
 #Buscar page table
 #Malloc maravilloso 
 #Guardar 
 
+
+
+#HabilitarPagina = 0
+#pedirPagina =1
+#guardar=2
+buzonGeneral=sysvmq.Queue(420)#Buzon para procesos recolectores
+buzonLlamados=sysvmq.Queue(9)#Buzon para solicitar al administrador meter datos.
+buzonRetornos=sysvmq.Queue(7)#Buzon para recibir la respuesta del administrador.
+buzonParametros=sysvmq.Queue(3)
 def mallocMaravilloso(sensorId,tamanoPagina): #Agrego en la page table y despues habilito pagina en memoria principal 
 	global pageTable,tamanoPT					#Y despues meto el numero de pagina en la page table 
 	pageTable.append([])
 	pageTable[tamanoPT].append(sensorId)
-	nuevaPag=aMemoria.habilitarPagina(tamanoPagina)
+	buzonLlamados.put(0)
+	buzonParametros.put(tamanoPagina)
+	nuevaPag=buzonRetornos.get()
+	#nuevaPag=aMemoria.habilitarPagina(tamanoPagina)
 	pageTable[tamanoPT].append(nuevaPag)
 	tamanoPT+=1
-	#Retornar un si se agrego o no
 	
-def getPaginasSensor(sensorId):# Busca en la page table y retorna los numeros de pagina referentes a un sensorId
+def getPaginasSensor(sensorId):# Busca en la page table y retorna los numeros de pagina referentes a un sensorId, lo utiliza pedirDatos()
 	global pageTable,tamanoPT
 	encontrado=False
 	numerosPagina=[]
@@ -40,7 +51,11 @@ def pedirDatos(sensorId): # Pido datos por medio de un sensor ID,la interfaz los
 	numeroPaginaSensor=getPaginasSensor(sensorId)
 	for i in range(0,len(numeroPaginaSensor)):
 		matrizRetorno.append([])
-		matrizRetorno[i].append(aMemoria.pedirPagina(numeroPaginaSensor[i])) #guardo pagina de la memoria en la matriz a retornar
+		buzonLlamados.put(1)
+		buzonParametros.put(numeroPaginaSensor[i])
+		paginaAMeter=buzonRetornos.get()
+		matrizRetorno[i].append(paginaAMeter)
+		#matrizRetorno[i].append(aMemoria.pedirPagina(numeroPaginaSensor[i])) #guardo pagina de la memoria en la matriz a retornar
 	return matrizRetorno
 	
 def buscarSensorId(sensorId):#Busco el sensorId en la page table y me retorna el indice
@@ -53,37 +68,54 @@ def buscarSensorId(sensorId):#Busco el sensorId en la page table y me retorna el
 		i+=1
 	return indice
 			
-def getSensorId(pack,tamanoPagina):#Desempaqueta y retorna el sensor id
-	if(tamanoPagina==5):
-		var = struct.unpack(FORMAT2,data) # Desempaqueta los datos recibidos
-		sensorId=var[0]
-	else:
-		var = struct.unpack(FORMAT1,data) # Desempaqueta los datos recibidos
-		sensorId=var[0]
-	return sensorId
+def getSensorId(pack):#Desempaqueta y retorna el sensor id
+	var = struct.unpack(FORMAT,data) # Desempaqueta los datos recibidos
+	identificador=var[0]
+	return identificador
 	
-def datoUtil(pack,tamanoPagina):#Desempaqueta y retorna fecha y dato en un paquete
-	if(tamanoPagina==5):
-		var = struct.unpack(FORMAT2,data) # Desempaqueta los datos recibidos
-		packUtil=struct.pack('BBBBf',var[1],var[2],var[3],var[4],var[5])
-	else:
-		var = struct.unpack(FORMAT1,data) # Desempaqueta los datos recibidos
-		packUtil=struct.pack('BBBB?',var[1],var[2],var[3],var[4],var[5])
+def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
+	var = struct.unpack(FORMAT,data) # Desempaqueta los datos recibidos
+	datoAleer=var[3]
+	if(datoAleer==0):
+		packUtil=struct.pack('I?',2,var[1],var[2])
+	elif(datoAleer==1):
+		packUtil=struct.pack('II',2,var[1],var[2])
+	elif(datoAleer==2):
+		packUtil=struct.pack('If',2,var[1],var[2])
 	return packUtil
-	 
 
+def getTamanoPag(pack):
+	tamPagina=0
+	var = struct.unpack(FORMAT,data) # Desempaqueta los datos recibidos
+	datoAleer=var[3]
+	if(datoAleer==0):
+		tamPagina=5
+	else:
+		tamPagina=8
+	return tamPagina
 
-def guardar(pack,tamanoPagina):#Busca el sensor ID, sino esta entonces lo agrega a la page table y luego guarda los datos en memoria.i
+def guardar(pack):#Busca el sensor ID, sino esta entonces lo agrega a la page table y luego guarda los datos en memoria.
 	global pageTable
-	ind=buscarSensorId(getSensorId(pack,tamanoPagina))
+	ind=buscarSensorId(getSensorId(pack))
 	if(ind==-1):
-		mallocMaravilloso(getSensorId(pack,tamanoPagina),tamanoPagina)
-	packDatos=datoUtil(pack,tamanoPagina)
-	numP=aMemoria.guardar(packDatos)
+		tamPagina=getTamanoPag(pack)
+		mallocMaravilloso(getSensorId(pack),tamPagina)
+	packDatos=datoUtil(pack)
+	buzonLlamados.put(2)
+	buzonParametros.put(packDatos)
+	buzonParametros.put(pageTable[ind][len(pageTable[ind])-1])
+	numP=buzonRetornos.get()
+	#numP=aMemoria.guardar(packDatos)
 	if(numP!=-1):
 		pageTable[ind].append(numP)
 	
-		
+while(True):
+
+	try:	
+		packRecolector = buzonGeneral.get_nowait() # get_nowait() revisa el buzon, si esta vacio no pasa nada, y sino recibe el dato para enviarlo
+		guardar(packRecolector)
+	except:
+		pass
 		
 		
 	
@@ -92,3 +124,4 @@ def guardar(pack,tamanoPagina):#Busca el sensor ID, sino esta entonces lo agrega
 			
 	
 	
+
