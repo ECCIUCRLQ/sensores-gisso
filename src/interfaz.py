@@ -19,15 +19,16 @@ FORMAT='IIfB' # IdentificadorSensor,fecha, dato,bit para verificar dato.
 #pedirPagina =1
 #guardar=2
 buzonGeneral=sysvmq.Queue(420)#Buzon para procesos recolectores
-buzonLlamados=sysvmq.Queue(9)#Buzon para solicitar al administrador meter datos.
-buzonRetornos=sysvmq.Queue(7)#Buzon para recibir la respuesta del administrador.
-buzonParametros=sysvmq.Queue(3)
+buzonLlamados=sysvmq.Queue(17)#Buzon para solicitar al administrador meter datos.
+buzonRetornos=sysvmq.Queue(16)#Buzon para recibir la respuesta del administrador.
+buzonParametros=sysvmq.Queue(15)
 def mallocMaravilloso(sensorId,tamanoPagina): #Agrego en la page table y despues habilito pagina en memoria principal 
 	global pageTable,tamanoPT					#Y despues meto el numero de pagina en la page table 
 	pageTable.append([])
 	pageTable[tamanoPT].append(sensorId)
 	print(pageTable)
 	buzonLlamados.put(0)
+	print("TamanoPagina",tamanoPagina)
 	buzonParametros.put(tamanoPagina)
 	nuevaPag=buzonRetornos.get()
 	#nuevaPag=aMemoria.habilitarPagina(tamanoPagina)
@@ -53,6 +54,7 @@ def pedirDatos(sensorId): # Pido datos por medio de un sensor ID,la interfaz los
 	for i in range(0,len(numeroPaginaSensor)):
 		matrizRetorno.append([])
 		buzonLlamados.put(1)
+		print("Numero pagina Sensor",numeroPaginaSensor[i])
 		buzonParametros.put(numeroPaginaSensor[i])
 		paginaAMeter=buzonRetornos.get()
 		matrizRetorno[i].append(paginaAMeter)
@@ -77,6 +79,7 @@ def getSensorId(pack):#Desempaqueta y retorna el sensor id
 	
 def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
 	var = struct.unpack(FORMAT,pack) # Desempaqueta los datos recibidos
+	print("Arreglo de Paquete desempaquetado",var)
 	datoAleer=var[3]
 	packUtil=0
 	if(datoAleer==0):
@@ -85,6 +88,7 @@ def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
 		packUtil=struct.pack('II',var[1],var[2])
 	elif(datoAleer==2):
 		packUtil=struct.pack('If',var[1],var[2])
+	print("Contenido packUtil",packUtil)
 	return packUtil
 
 def getTamanoPag(pack):
@@ -114,14 +118,14 @@ def guardar(pack):#Busca el sensor ID, sino esta entonces lo agrega a la page ta
 		pageTable[ind].append(numP)
 	
 while(True):
-	packRecolector = buzonGeneral.get()
+
+	try:	
+		packRecolector = buzonGeneral.get_nowait() # get_nowait() revisa el buzon, si esta vacio no pasa nada, y sino recibe el dato para enviarlo
+		guardar(packRecolector)
+		
+	except:
+		pass
 	time.sleep(1)
-	guardar(packRecolector)
-	#try:	
-		#packRecolector = buzonGeneral.get_nowait() # get_nowait() revisa el buzon, si esta vacio no pasa nada, y sino recibe el dato para enviarlo
-		#guardar(packRecolector)
-	#except:
-		#pass
 		
 		
 	

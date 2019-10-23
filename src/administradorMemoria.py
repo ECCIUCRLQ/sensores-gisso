@@ -3,15 +3,16 @@ import struct
 import time
 import random
 from ipcqueue import sysvmq
+import pdb
 numeroPagina=0
 memoriaPrincipal=[]
 numeroFilas=13
 contadorFilaActual=0
 max8 = 10575
 max5 = 16920
-buzonLlamados=sysvmq.Queue(9)
-buzonRetornos=sysvmq.Queue(7)
-buzonParametros=sysvmq.Queue(3)
+buzonLlamados=sysvmq.Queue(17)
+buzonRetornos=sysvmq.Queue(16)
+buzonParametros=sysvmq.Queue(15)
 #HabilitarPagina = 0
 #pedirPagina =1
 #guardar=2
@@ -35,13 +36,14 @@ def pasarPaginaMSecundariaPrincipal(pagSwap,numP):
 	global memoriaPrincipal
 	#Para buscar la pagina deseada en memoria principal
 	arregloTemporal = []
-	print("NumP",numP)
-	print("String",numP)
 	nombrePagina=str(numP)+".csv"
 	with open(nombrePagina, 'rb') as csvfile:
 		arregloTemporal = list(csv.reader(csvfile))
 	 #Para colocar la pagina en memoria principal
-	memoriaPrincipal[pagSwap].append(arregloTemporal[0])
+	memoriaPrincipal[pagSwap]=arregloTemporal[0][:]#.append(arregloTemporal[0])
+	print(arregloTemporal[0][1])
+	print(memoriaPrincipal[pagSwap])
+	print(memoriaPrincipal[pagSwap][0])
 	
 	
 def busquedaPaginaSwap():
@@ -66,8 +68,6 @@ def busquedaPaginaSwap():
 			if(len(memoriaPrincipal[indMemSwap])>0):
 				vacio=False
 		
-	print(memoriaPrincipal)
-	print("indice",indMemSwap)
 	return indMemSwap
 
 
@@ -78,7 +78,7 @@ def busquedaPaginaMemoriaPrincipal(numPABuscar):
 	i=0
 	while(i<13 and paginaEncontrada==False):
 		if(len(memoriaPrincipal[i]) > 0 and memoriaPrincipal[i][0]==numPABuscar):
-			indiceARetornar=numPABuscar
+			indiceARetornar=i
 			paginaEncontrada=True
 		i+=1
 	return indiceARetornar
@@ -123,7 +123,9 @@ def pedirPagina(numeroP):
 	return paginaADevolver
 	
 def paginallenaMemoriaPrincipal(indiceP):
+	print("aqui me caigo")
 	paginallena=False
+	print("Ind:" +str(indiceP))
 	if(memoriaPrincipal[indiceP][1] == 5):
 		if(len(memoriaPrincipal[indiceP]) == max5):
 			paginaLlena = True
@@ -136,6 +138,7 @@ def guardar(pack,numP):
 	global numeroFilas, memoriaPrincipal,max5,max8
 	numeroPag=-1
 	indiceP=busquedaPaginaMemoriaPrincipal(numP)
+	print(indiceP)
 	if(indiceP!=-1):
 		paginaLlena=paginallenaMemoriaPrincipal(indiceP)
 		#Si tiene espacio
@@ -150,10 +153,13 @@ def guardar(pack,numP):
 			memoriaPrincipal[indiceP].append(pack)
 			numeroPag=pagNueva
 	else:
+		print("Entre al else")
 		indMemSwap=busquedaPaginaSwap()
+		print("Indice swp:" + str(indMemSwap))
 		pasarPaginaMPrincipalSecundaria(indMemSwap)
 		pasarPaginaMSecundariaPrincipal(indMemSwap,numP)
 		paginaLlena=paginallenaMemoriaPrincipal(indMemSwap)
+		print("ahhhhhhhhhhhhhhhhh")
 		if(paginaLlena==False):
 			#Para guardar
 			memoriaPrincipal[indMemSwap].append(pack)
