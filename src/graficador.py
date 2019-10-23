@@ -1,34 +1,31 @@
 import interpreter as interpreter
 import matplotlib.pyplot as plt 
 
-interpreter.getPage()
-interpreter.getData()
+def setup():
+	interpreter.setPage()
+	interpreter.getData()
+	
+	# x-coordinates of left sides of bars  
+	left = interpreter.getEjeX()
+	
+	# heights of bars 
+	height = interpreter.getEjeY() 
+	
+	# plotting a bar chart
+	plt.bar(left, height, width = 0.8, color = ['red', 'green']) 
+	 
+def graficar():  
+	setup()
+	
+	# naming the axis 
+	plt.xlabel('Hora(s)') 
+	plt.ylabel('# Detecciones') 
+	
+	# plot title 
+	plt.title('Actividad de sensores') 
   
-# x-coordinates of left sides of bars  
-#left = [1, 2, 3, 4, 5] 
-left = interpreter.getEjeX()
+	# function to show the plot 
+	plt.show() 
 
-print left
-  
-# heights of bars 
-#height = [1, 24, 36, 40, 5, 2] 
-height = interpreter.getEjeY() 
 
-print height
-  
-# labels for bars 
-tick_label = ['1', '2', '4','5'] 
-  
-# plotting a bar chart 
-plt.bar(left, height, tick_label = tick_label, 
-        width = 0.8, color = ['red', 'green']) 
-  
-# naming the x-axis 
-plt.xlabel('Hora(s)') 
-# naming the y-axis 
-plt.ylabel('# Detecciones') 
-# plot title 
-plt.title('Actividad de sensores') 
-  
-# function to show the plot 
-plt.show() 
+graficar()

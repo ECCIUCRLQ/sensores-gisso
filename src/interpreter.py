@@ -1,18 +1,15 @@
 # coding: utf8
-
 import time
 import datetime
 import struct 
 
-import pdb
 # Inicio datos/metodos temporales para testeo
-
 formato = 'III'
 datosSensor = struct.pack(formato,1,0,3) # en lugar del primer int iria int(time.time())
 datosSensor2 = struct.pack(formato,2,6,2)
 datosSensor3 = struct.pack(formato,2,5,3)
 datosSensor4 = struct.pack(formato,4,2,2)
-datosSensor5 = struct.pack(formato,5,1,1)
+datosSensor5 = struct.pack(formato,7,1,1)
 
 paginaTest = []
 pagina1 = [datosSensor,datosSensor2,datosSensor3,datosSensor4,datosSensor5]
@@ -20,18 +17,16 @@ pagina2 = [datosSensor,datosSensor2,datosSensor3,datosSensor4,datosSensor5]
 pagina3 = [datosSensor,datosSensor2,datosSensor3,datosSensor4,datosSensor5]
 pagina4 = [datosSensor,datosSensor2,datosSensor3,datosSensor4,datosSensor5]
 
-
-def setPage():
+def reserveMemory():
 	for i in range(4):
 		paginaTest.append([])
 
 def definePage():
-	setPage()
+	reserveMemory()
 	paginaTest[0].append(pagina1)
 	paginaTest[1].append(pagina2)
 	paginaTest[2].append(pagina3)
 	paginaTest[3].append(pagina4)
-
 # Fin datos/metodos temporales para testeo
 
 x_eje = []  # Datos que delimitan
@@ -68,13 +63,12 @@ def contar(cantidad_y):
 def getData():
 	for i in range(len(paginaTest)):
 		for j in range(len(paginaTest[i][0])):
-			getHour(paginaTest[i][0][j])
-	#pdb.set_trace()		
+			getHour(paginaTest[i][0][j])	
 	contar(cantidad_y)		
 	x_eje.sort() # El graficador los ocupa en orden
 
 		
-def getPage():
+def setPage():
 	definePage()
 
 def getEjeX():
@@ -83,9 +77,3 @@ def getEjeX():
 def getEjeY():
 	return y_eje	
 																																							
-
-#print x_eje
-#print y_eje
-
-
-	
