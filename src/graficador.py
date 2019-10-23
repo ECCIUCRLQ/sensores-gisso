@@ -18,9 +18,11 @@ def graficar():
 	setup()
 	
 	# naming the axis 
-	plt.xlabel('Hora(s)') 
-	plt.ylabel('# Detecciones') 
-	
+	plt.xlabel('Hora(s)')
+	if interpreter.isFloat(): 
+		plt.ylabel('Promedio de Datos') 
+	else:
+		plt.ylabel('Cantidad de Detecciones') 
 	# plot title 
 	plt.title('Actividad de sensores') 
   
