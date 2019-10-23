@@ -1,39 +1,34 @@
 import interpreter as interpreter
+import matplotlib.pyplot as plt 
 
-#import pandas as pd
-#from matplotlib import pyplot as plt
+interpreter.getPage()
+interpreter.getData()
+  
+# x-coordinates of left sides of bars  
+#left = [1, 2, 3, 4, 5] 
+left = interpreter.getEjeX()
 
-interpreter.requestData()
+print left
+  
+# heights of bars 
+#height = [1, 24, 36, 40, 5, 2] 
+height = interpreter.getEjeY() 
 
-ages = [52, 18, 19, 21, 25, 26, 26, 30, 32, 38, 45, 55] 
-bins = interpreter.getBins()
-
-def printPage():
-	print ("Valor:", interpreter.data[0][0])
-
- 
-def graficar() : 
-	print ("Printing bins")
-	
-	print (bins)
-	
-	#plt.style.use('fivethirtyeight')
-	#plt.hist(ages, bins=bins, edgecolor='black')
- 
-	# data = pd.read_csv('data.csv')
-	# ids = data['Responder_id']
-	# ages = data['Age']
- 
-	# median_age = 29
-	# color = '#fc4f30'
- 
-	# plt.legend()
-	#plt.title('This is the title')
-	#plt.title('Actividad de Sensores')
-	#plt.xlabel('Tiempo (h)')
-	#plt.ylabel('Promedio total de detecciones')
- 
-	#plt.tight_layout()
-	#plt.show()
-printPage()
-graficar() 
+print height
+  
+# labels for bars 
+tick_label = ['1', '2', '4','5'] 
+  
+# plotting a bar chart 
+plt.bar(left, height, tick_label = tick_label, 
+        width = 0.8, color = ['red', 'green']) 
+  
+# naming the x-axis 
+plt.xlabel('Hora(s)') 
+# naming the y-axis 
+plt.ylabel('# Detecciones') 
+# plot title 
+plt.title('Actividad de sensores') 
+  
+# function to show the plot 
+plt.show() 
