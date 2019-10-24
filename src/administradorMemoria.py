@@ -125,11 +125,10 @@ def pedirPagina(numeroP):
 	return paginaADevolver
 	
 def paginallenaMemoriaPrincipal(indiceP): #Verificar por medio de un indice si una pagina esta llena en memoria princk
-	print("aqui me caigo")
 	paginaLlena=False
-	print("Ind:" + str(indiceP))
-	print ("Tamano de celdas pagina" + str(memoriaPrincipal[indiceP][1]))
-	print ("Tamano" + str(len(memoriaPrincipal[indiceP])))
+	#print("Ind:" + str(indiceP))
+	#print ("Tamano de celdas pagina" + str(memoriaPrincipal[indiceP][1]))
+	#print ("Tamano" + str(len(memoriaPrincipal[indiceP])))
 	if(memoriaPrincipal[indiceP][1] == 5):
 		#print("Entre al if que es")
 		if(len(memoriaPrincipal[indiceP]) == max5):
@@ -192,7 +191,7 @@ while(True):
 	elif(codigoLlamado==1):#Llama a pedir pagina
 		parametro=buzonParametros.get()
 		paginaADevolver=pedirPagina(parametro)
-		print("BUZON RETORNO: ",paginaADevolver)
+		#print("BUZON RETORNO: ",paginaADevolver)
 		buzonRetornos.put(paginaADevolver)
 		
 	elif(codigoLlamado==2): #Llama a guardar 

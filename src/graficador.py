@@ -3,15 +3,16 @@ import matplotlib.pyplot as plt
 
 import sys
 
+suficiente = True
 
 def setup():
+	global suficiente
 	teamID = sys.argv[1]
 	sensorID = sys.argv[2]
 	
 	print("ids",teamID,sensorID)
 	
 	interpreter.setPage(teamID,sensorID)
-	print ("hola")
 	#interpreter.getData()
 	
 	# x-coordinates of left sides of bars  
@@ -20,23 +21,31 @@ def setup():
 	# heights of bars 
 	height = interpreter.getEjeY() 
 	
+	if(len(left) == 0 or len(height) == 0):
+		suficiente = False
+		print("No hay datos suficientes")
+	
 	# plotting a bar chart
-	plt.bar(left, height, width = 0.8, color = ['red', 'green']) 
+	
+	plt.bar(left, height, width = 0.8, color = ['red'], ) # label = 
+	#pylab.legend(loc='upper left') pos de la etiqueta
 	 
-def graficar():  
+def graficar():
+	global suficiente  
 	setup()
 	
 	# naming the axis 
-	plt.xlabel('Hora(s)')
+	plt.xlabel('Minuto(s)')
 	if interpreter.isBool(): 
-		plt.ylabel('Promedio de Datos') 
-	else:
 		plt.ylabel('Cantidad de Detecciones') 
+	else:
+		plt.ylabel('Promedio de Datos') 
 	# plot title 
 	plt.title('Actividad de sensores') 
   
 	# function to show the plot 
-	plt.show() 
+	if(suficiente):
+		plt.show() 
 
 
 graficar()

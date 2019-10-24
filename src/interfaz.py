@@ -15,18 +15,21 @@ buzonRetornos=sysvmq.Queue(16)#Buzon para recibir la respuesta del administrador
 buzonParametros=sysvmq.Queue(15)
 buzonLlamadoGraficador=sysvmq.Queue(69)
 buzonRetornoGraficador=sysvmq.Queue(469)
+
+
 def mallocMaravilloso(sensorId,tamanoPagina): #Agrego en la page table y despues habilito pagina en memoria principal 
 	global pageTable,tamanoPT					#Y despues meto el numero de pagina en la page table 
 	pageTable.append([])
 	pageTable[tamanoPT].append(sensorId)
-	print(pageTable)
 	buzonLlamados.put(0)
-	print("TamanoPagina",tamanoPagina)
+	#print("TamanoPagina",tamanoPagina)
 	buzonParametros.put(tamanoPagina)
 	nuevaPag=buzonRetornos.get()
 	#nuevaPag=aMemoria.habilitarPagina(tamanoPagina)
 	pageTable[tamanoPT].append(nuevaPag)
 	tamanoPT+=1
+	print("Malloc")
+	print("PageTable:",pageTable)
 	
 def getPaginasSensor(sensorId):# Busca en la page table y retorna los numeros de pagina referentes a un sensorId, lo utiliza pedirDatos()
 	global pageTable,tamanoPT
@@ -44,17 +47,17 @@ def pedirDatos(sensorId): # Pido datos por medio de un sensor ID,la interfaz los
 	numerosPaginaSensor=[]
 	matrizRetorno = []
 	numeroPaginaSensor=getPaginasSensor(sensorId)
-	print("NUMPAGSENSOR Y ID:",numeroPaginaSensor,sensorId)
+	#print("NUMPAGSENSOR Y ID:",numeroPaginaSensor,sensorId)
 	for i in range(0,len(numeroPaginaSensor)):
 		matrizRetorno.append([])
 		buzonLlamados.put(1)
-		print("Numero pagina Sensor",numeroPaginaSensor[i])
+		#print("Numero pagina Sensor",numeroPaginaSensor[i])
 		buzonParametros.put(numeroPaginaSensor[i])
 		paginaAMeter=buzonRetornos.get()
-		print ("pam: ",paginaAMeter,i)
+		#print ("pam: ",paginaAMeter,i)
 		matrizRetorno[i].append(paginaAMeter)
 	
-	print("Matriz: ",matrizRetorno)
+	#print("Matriz: ",matrizRetorno)
 	buzonRetornoGraficador.put(matrizRetorno)
 	
 def buscarSensorId(sensorId):#Busco el sensorId en la page table y me retorna el indice
@@ -75,7 +78,7 @@ def getSensorId(pack):#Desempaqueta y retorna el sensor id
 	
 def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
 	var = struct.unpack(FORMAT,pack) # Desempaqueta los datos recibidos
-	print("Arreglo de Paquete desempaquetado",var)
+	#print("Arreglo de Paquete desempaquetado",var)
 	datoAleer=var[3]
 	packUtil=0
 	#packUtil=[var[1],var[2]]
@@ -87,7 +90,7 @@ def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
 	elif(datoAleer==2):
 		packUtil=struct.pack('If',var[1],var[2])
 		
-	print("Contenido packUtil",packUtil)
+	#print("Contenido packUtil",packUtil)
 	return packUtil
 
 def getTamanoPag(pack): #Retorna el tamaño de pagina, si en el pack el dato del sensor es booleano entonces devuelve un cinco o sino un ocho.
@@ -116,6 +119,10 @@ def guardar(pack):#Busca el sensor ID, sino esta entonces lo agrega a la page ta
 	#numP=aMemoria.guardar(packDatos)
 	if(numP!=-1):
 		pageTable[ind].append(numP)
+		print("Guardar")
+		print("PageTable:",pageTable)
+		
+	
 	
 while(True):
 	packRecolector =-1

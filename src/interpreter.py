@@ -23,7 +23,6 @@ tipoDato = 0
 # Obtiene la hora de cada paquete. Linea comentada seria la final, comentada por testeo
 def getHour(packet):
 	global tipoDato
-	print ("TIPO DATO: ",tipoDato)
 	formato = formatoBool
 	if(tipoDato == 1):
 		formato = formatoBool
@@ -72,7 +71,6 @@ def contar(cantidad_y):
 
 # Recorre la matriz de datos paquete por paquete, llama al método para sacar la hora de cada paquete
 def getData():
-	print("len",matrizRetorno)
 	for i in range(len(matrizRetorno)):
 		for j in range(2,len(matrizRetorno[i][0])):
 			print
@@ -91,11 +89,9 @@ def getData():
 def setPage(equipoId,sensorId):
 	iD = str(equipoId)+str(sensorId)
 	iD = int(iD)
-	print("ID: ",iD)
 	global matrizRetorno,tipoDato
 	buzonLlamadoGraficador.put(iD)
 	matrizRetorno=buzonRetornoGraficador.get()
-	print("Retorno: ",matrizRetorno)
 	
 	if (equipoId == 5 and sensorId == 2):
 		tipoDato = 1 # float

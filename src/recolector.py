@@ -5,7 +5,7 @@ import threading
 from ipcqueue import sysvmq # Biblioteca para los buzones.
 
 
-MINE = "192.168.0.7"
+MINE = "10.1.137.17"
 
 UDP_PORT = 10001
 FORMAT = 'BIBBBBBf'
@@ -23,7 +23,7 @@ def crearThread(identificador):
 def correr(nombre):
 	buzComun = sysvmq.Queue(420)
 	sid = nombre #Identificador
-	print("Corriendo: " + str(sid))
+	#print("Corriendo: " + str(sid))
 	buz =sysvmq.Queue(nombre)	#crea buzon 
 	while True:
 		print(nombre)
@@ -64,7 +64,6 @@ sock.bind((MINE, UDP_PORT))# Se establece la conexion
 
 while True:
 	data, addr = sock.recvfrom(50) # buffer size
-	print ("LLego algo")
 	var = struct.unpack(FORMAT,data) # Desempaqueta los datos recibidos
 	t = var[1]	# Fecha que se detecto 
 	t = time.ctime(t)	# Cambio de formato
@@ -72,6 +71,9 @@ while True:
 	sock.sendto(packAck, (addr))	# Enviamos al cliente este paquete
 	identificador = str(var[2]) + str(var[5])
 	identificador = int(identificador)
+	
+	aEscribir = "Mensaje recibido de: " + ListaIdGrupo[var[2]-1] +"\n"+"Sensor: "+listaSensores[var[6]]+"\n"+"Numero Ack: "+str(var[0])+"\n"+"Fecha: " +str(t)+"\n"+"Dato: " +str(var[7])+"\n-------------------\n"
+	print(aEscribir)	
 	
 	if(diccionario.get(identificador)== None):
 		crearThread(identificador)
