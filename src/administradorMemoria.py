@@ -8,10 +8,10 @@ numeroPagina=0
 memoriaPrincipal=[]
 numeroFilas=13
 contadorFilaActual=0
-#max8 = 10575
-#max5 = 16920
-max8 = 8
-max5 = 8
+max8 = 10575
+max5 = 16920
+#max8 = 8
+#max5 = 8
 buzonLlamados=sysvmq.Queue(17)
 buzonRetornos=sysvmq.Queue(16)
 buzonParametros=sysvmq.Queue(15)
@@ -110,14 +110,14 @@ def pedirPagina(numeroP):
 	paginaADevolver=[]
 	for i in range(numeroFilas):
 		#Si la pagina esta en memoria principal
-		if(memoriaPrincipal[i][0]==numeroP):
+		if(len(memoriaPrincipal[i]) != 0 and memoriaPrincipal[i][0]==numeroP):
 			paginaADevolver = memoriaPrincipal[i][:]#Revisar esto
 		#No esta en memoria
 		else:
 			indMemSwap=busquedaPaginaSwap()
 			pasarPaginaMPrincipalSecundaria(indMemSwap)
 			
-			pasarPaginaMSecundariaPrincipal(pagSwap,numeroP)
+			pasarPaginaMSecundariaPrincipal(indMemSwap,numeroP)
 			 #Se toma de la memoria la pagina deseada
 			paginaADevolver = memoriaPrincipal[indMemSwap][:]
 	return paginaADevolver

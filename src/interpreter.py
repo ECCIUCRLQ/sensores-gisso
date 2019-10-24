@@ -2,8 +2,8 @@
 import time
 import datetime
 import struct 
-
-formato = 'If'
+from ipcqueue import sysvmq
+formato = 'I'
 matrizRetorno = []
 buzonLlamadoGraficador=sysvmq.Queue(69)
 buzonRetornoGraficador=sysvmq.Queue(469)
@@ -14,11 +14,16 @@ y_eje = []	# la grafica
 cantidad_y = []
 datos_y = []
 
+
+
+
 # Obtiene la hora de cada paquete. Linea comentada seria la final, comentada por testeo
 def getHour(packet):
+	print("packet", packet)
 	paquete = struct.unpack(formato, packet)
-	#hora = time.localtime(paquete[0]).tm_hour
-	hora = paquete[0]
+	print("paquete",paquete)
+	hora = time.localtime(paquete[0]).tm_hour
+	#hora = paquete[0]
 	dato = paquete[1]
 	if hora not in x_eje:
 		x_eje.append(hora)
@@ -58,17 +63,27 @@ def contar(cantidad_y):
 
 # Recorre la matriz de datos paquete por paquete, llama al método para sacar la hora de cada paquete
 def getData():
+	print("len",matrizRetorno)
 	for i in range(len(matrizRetorno)):
-		for j in range(len(matrizRetorno[i+2][0])):
-			getHour(matrizRetorno[i+2][0][j+2])	
+		for j in range(2,len(matrizRetorno[i][0])):
+			print
+			getHour(matrizRetorno[i][0][j])	
 	contar(cantidad_y)		
 	x_eje.sort() # El graficador los ocupa en orden
+	print("x_eje", x_eje)
+	print("y_eje", y_eje)
+	print("cantidad_y", cantidad_y)
+	print("datos_y", datos_y)
 		
 def setPage(sensorId):
-	buzonLlamadoGraficador.put(sensorID)
+	global matrizRetorno
+	print ("setPage")
+	buzonLlamadoGraficador.put(sensorId)
+	print ("setPage1")
 	matrizRetorno=buzonRetornoGraficador.get()
-	definePage()
-
+	print("matriz",matrizRetorno)
+	print ("setPage2")
+	getData()
 def getEjeX():
 	return x_eje
 	

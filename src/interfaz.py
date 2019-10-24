@@ -78,13 +78,15 @@ def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
 	var = struct.unpack(FORMAT,pack) # Desempaqueta los datos recibidos
 	print("Arreglo de Paquete desempaquetado",var)
 	datoAleer=var[3]
-	packUtil=0
-	if(datoAleer==0):
-		packUtil=struct.pack('I?',var[1],var[2])
-	elif(datoAleer==1):
-		packUtil=struct.pack('II',var[1],var[2])
-	elif(datoAleer==2):
-		packUtil=struct.pack('If',var[1],var[2])
+	#packUtil=0
+	packUtil=[var[1],var[2]]
+	
+	#if(datoAleer==0):
+		#packUtil=struct.pack('I?',var[1],var[2])
+	#elif(datoAleer==1):
+		#packUtil=struct.pack('II',var[1],var[2])
+	#elif(datoAleer==2):
+		#packUtil=struct.pack('If',var[1],var[2])
 	print("Contenido packUtil",packUtil)
 	return packUtil
 
@@ -115,25 +117,19 @@ def guardar(pack):#Busca el sensor ID, sino esta entonces lo agrega a la page ta
 		pageTable[ind].append(numP)
 	
 while(True):
+	packRecolector =-1
 	try:	
 		packRecolector = buzonGeneral.get_nowait() # get_nowait() revisa el buzon, si esta vacio no pasa nada, y sino recibe el dato para enviarlo
 	except:
-		pass
-	guardar(packRecolector)
+		pass	
+	if 	(packRecolector != -1):
+		guardar(packRecolector)
 	sID=-1
 	try:
-		sId=buzonLlamadoGraficador.get_nowait()
+		sID=buzonLlamadoGraficador.get_nowait()
 	except:
 		pass
-	if(sID!=-1)
+	if(sID!=-1):
 		pedirDatos(sID)
 	time.sleep(1)
 		
-		
-	
-	
-
-			
-	
-	
-

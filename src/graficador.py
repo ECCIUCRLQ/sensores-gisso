@@ -2,8 +2,9 @@ import interpreter as interpreter
 import matplotlib.pyplot as plt 
 
 def setup():
-	interpreter.setPage()
-	interpreter.getData()
+	interpreter.setPage(31)
+	print ("hola")
+	#interpreter.getData()
 	
 	# x-coordinates of left sides of bars  
 	left = interpreter.getEjeX()
