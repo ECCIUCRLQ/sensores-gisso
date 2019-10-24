@@ -1,3 +1,8 @@
+# Librerias necesarias:
+#	sudo apt install python-pip
+#	sudo pip install matploblib
+#	sudo apt install python-tk
+
 import interpreter as interpreter
 import matplotlib.pyplot as plt 
 
