@@ -3,7 +3,7 @@ import time
 import datetime
 import struct 
 from ipcqueue import sysvmq
-formato = 'I'
+formato = 'IB'
 matrizRetorno = []
 buzonLlamadoGraficador=sysvmq.Queue(69)
 buzonRetornoGraficador=sysvmq.Queue(469)
@@ -22,7 +22,8 @@ def getHour(packet):
 	print("packet", packet)
 	paquete = struct.unpack(formato, packet)
 	print("paquete",paquete)
-	hora = time.localtime(paquete[0]).tm_hour
+	print("Hora: ",time.ctime(paquete[0]))
+	hora = time.localtime(paquete[0]).tm_min
 	#hora = paquete[0]
 	dato = paquete[1]
 	if hora not in x_eje:

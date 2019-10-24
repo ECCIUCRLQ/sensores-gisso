@@ -2,7 +2,7 @@ import interpreter as interpreter
 import matplotlib.pyplot as plt 
 
 def setup():
-	interpreter.setPage(31)
+	interpreter.setPage(32)
 	print ("hola")
 	#interpreter.getData()
 	

@@ -55,6 +55,7 @@ def pedirDatos(sensorId): # Pido datos por medio de un sensor ID,la interfaz los
 		print("Numero pagina Sensor",numeroPaginaSensor[i])
 		buzonParametros.put(numeroPaginaSensor[i])
 		paginaAMeter=buzonRetornos.get()
+		print ("pam: ",paginaAMeter,i)
 		matrizRetorno[i].append(paginaAMeter)
 	buzonRetornoGraficador.put(matrizRetorno)
 	
@@ -78,15 +79,16 @@ def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
 	var = struct.unpack(FORMAT,pack) # Desempaqueta los datos recibidos
 	print("Arreglo de Paquete desempaquetado",var)
 	datoAleer=var[3]
-	#packUtil=0
-	packUtil=[var[1],var[2]]
+	packUtil=0
+	#packUtil=[var[1],var[2]]
 	
-	#if(datoAleer==0):
-		#packUtil=struct.pack('I?',var[1],var[2])
-	#elif(datoAleer==1):
-		#packUtil=struct.pack('II',var[1],var[2])
-	#elif(datoAleer==2):
-		#packUtil=struct.pack('If',var[1],var[2])
+	if(datoAleer==0):
+		packUtil=struct.pack('IB',var[1],var[2])
+	elif(datoAleer==1):
+		packUtil=struct.pack('II',var[1],var[2])
+	elif(datoAleer==2):
+		packUtil=struct.pack('If',var[1],var[2])
+		
 	print("Contenido packUtil",packUtil)
 	return packUtil
 

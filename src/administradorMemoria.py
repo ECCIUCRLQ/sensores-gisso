@@ -107,19 +107,18 @@ def habilitarPagina(tamanoPagina):
 #Es para entregarle a la interfaz la pagina solicitada.		
 def pedirPagina(numeroP):
 	global memoriaPrincipal,numeroFilas,max5,max8
-	paginaADevolver=[]
-	for i in range(numeroFilas):
-		#Si la pagina esta en memoria principal
-		if(len(memoriaPrincipal[i]) != 0 and memoriaPrincipal[i][0]==numeroP):
-			paginaADevolver = memoriaPrincipal[i][:]#Revisar esto
-		#No esta en memoria
-		else:
-			indMemSwap=busquedaPaginaSwap()
-			pasarPaginaMPrincipalSecundaria(indMemSwap)
-			
-			pasarPaginaMSecundariaPrincipal(indMemSwap,numeroP)
-			 #Se toma de la memoria la pagina deseada
-			paginaADevolver = memoriaPrincipal[indMemSwap][:]
+	paginaADevolver=[]	
+	indicePaginaADevolver = busquedaPaginaMemoriaPrincipal(numeroP)
+	#Esta en memoria
+	if (indicePaginaADevolver != -1):
+		paginaADevolver = memoriaPrincipal[indicePaginaADevolver]
+	#No esta en memoria
+	else:
+		indMemSwap=busquedaPaginaSwap()
+		pasarPaginaMPrincipalSecundaria(indMemSwap)
+		pasarPaginaMSecundariaPrincipal(indMemSwap,numeroP)
+		 #Se toma de la memoria la pagina deseada
+		paginaADevolver = memoriaPrincipal[indMemSwap][:]
 	return paginaADevolver
 	
 def paginallenaMemoriaPrincipal(indiceP):

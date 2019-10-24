@@ -5,7 +5,7 @@ import threading
 from ipcqueue import sysvmq # Biblioteca para los buzones.
 
 
-MINE = "172.31.47.185"
+MINE = "192.168.0.7"
 
 UDP_PORT = 10001
 FORMAT = 'BIBBBBBf'
