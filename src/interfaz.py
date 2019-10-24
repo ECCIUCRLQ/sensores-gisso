@@ -7,13 +7,7 @@ import threading
 pageTable=[]
 tamanoPT=0
 FORMAT='IIfB' # IdentificadorSensor,fecha, dato,bit para verificar dato. 
-#Pedir datos, metodo que va a llamar el graficador
-#Buscar page table
-#Malloc maravilloso 
-#Guardar 
-#HabilitarPagina = 0
-#pedirPagina =1
-#guardar=2
+
 buzonGeneral=sysvmq.Queue(420)#Buzon para procesos recolectores
 buzonLlamados=sysvmq.Queue(17)#Buzon para solicitar al administrador meter datos.
 buzonRetornos=sysvmq.Queue(16)#Buzon para recibir la respuesta del administrador.
@@ -92,7 +86,7 @@ def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
 	print("Contenido packUtil",packUtil)
 	return packUtil
 
-def getTamanoPag(pack):
+def getTamanoPag(pack): #Retorna el tamaño de pagina, si en el pack el dato del sensor es booleano entonces devuelve un cinco o sino un ocho.
 	tamPagina=0
 	var = struct.unpack(FORMAT,pack) # Desempaqueta los datos recibidos
 	datoAleer=var[3]
@@ -102,6 +96,7 @@ def getTamanoPag(pack):
 		tamPagina=8
 	return tamPagina
 
+					#Se le pasa un pack, este se le busca el sensorID
 def guardar(pack):#Busca el sensor ID, sino esta entonces lo agrega a la page table y luego guarda los datos en memoria.
 	global pageTable
 	ind=buscarSensorId(getSensorId(pack))
@@ -120,16 +115,16 @@ def guardar(pack):#Busca el sensor ID, sino esta entonces lo agrega a la page ta
 	
 while(True):
 	packRecolector =-1
-	try:	
+	try:											#Recoge lo que tenga el buzon de los procesos recolectores y o guarda en pack recolector.
 		packRecolector = buzonGeneral.get_nowait() # get_nowait() revisa el buzon, si esta vacio no pasa nada, y sino recibe el dato para enviarlo
 	except:
 		pass	
-	if 	(packRecolector != -1):
+	if 	(packRecolector != -1): # Si pack recolector es distinto de -1 lo guarda
 		guardar(packRecolector)
 	sID=-1
 	try:
-		sID=buzonLlamadoGraficador.get_nowait()
-	except:
+		sID=buzonLlamadoGraficador.get_nowait() #Buzón graficador recoge lo que le envie el graficador y lo guarda en sID 
+	except:										#Si SID es distinto de -1 entonces pide los datos referentes a ese sensorID
 		pass
 	if(sID!=-1):
 		pedirDatos(sID)

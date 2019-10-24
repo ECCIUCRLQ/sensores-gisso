@@ -21,8 +21,8 @@ buzonParametros=sysvmq.Queue(15)
 for i in range(numeroFilas):
     memoriaPrincipal.append([])
 
-def pasarPaginaMPrincipalSecundaria(pagSwap):
-	global memoriaPrincipal
+def pasarPaginaMPrincipalSecundaria(pagSwap): #Recibe el indice de la página a hacer swap y pasa una página (arreglo) a memoria secundaria por medio de un .csv
+	global memoriaPrincipal					#Y quita el arreglo cambiado
 	numeroPage = memoriaPrincipal[pagSwap][0]
 	nombrePagina=str(numeroPage)+".csv"
 	#Se crea un archivo con los datos de la pagina seleccionada 	
@@ -34,7 +34,7 @@ def pasarPaginaMPrincipalSecundaria(pagSwap):
 	del memoriaPrincipal[pagSwap][:]
 	
 	
-def pasarPaginaMSecundariaPrincipal(pagSwap,numP):
+def pasarPaginaMSecundariaPrincipal(pagSwap,numP): #Busca la página en mem secundaria, si esta entonces guarde el archivo en un arreglo y lo mete en memoriaPrincipal
 	global memoriaPrincipal
 	#Para buscar la pagina deseada en memoria principal
 	arregloTemporal = []
@@ -48,7 +48,7 @@ def pasarPaginaMSecundariaPrincipal(pagSwap,numP):
 	print(memoriaPrincipal[pagSwap][0])
 	
 	
-def busquedaPaginaSwap():
+def busquedaPaginaSwap(): #Sirve para localizar el indice de la pagina en la que se va a ser swap
 	global memoriaPrincipal,max5,max8
 	pagSwapB = False
 	indMemSwap = -1
@@ -73,7 +73,7 @@ def busquedaPaginaSwap():
 	return indMemSwap
 
 
-def busquedaPaginaMemoriaPrincipal(numPABuscar):
+def busquedaPaginaMemoriaPrincipal(numPABuscar):#Sirve para localizar el indice de la pagina que se esta buscando en memPrincipal
 	global memoriaPrincipal
 	indiceARetornar=-1
 	paginaEncontrada=False
@@ -121,7 +121,7 @@ def pedirPagina(numeroP):
 		paginaADevolver = memoriaPrincipal[indMemSwap][:]
 	return paginaADevolver
 	
-def paginallenaMemoriaPrincipal(indiceP):
+def paginallenaMemoriaPrincipal(indiceP): #Verificar por medio de un indice si una pagina esta llena en memoria princk
 	print("aqui me caigo")
 	paginaLlena=False
 	print("Ind:" + str(indiceP))
@@ -138,7 +138,8 @@ def paginallenaMemoriaPrincipal(indiceP):
 	#print("Retorna pagina llena con" + str(paginaLlena))
 	return paginaLlena
 	
-def guardar(pack,numP):
+def guardar(pack,numP): #Guarda en memoria. Puede tener varias condiciones que la pagina este en memoria principal pero no este llena entonces solo guarda
+						#Que este en memoria principal pero la pagina esta llena y que la pagina no este en memoria principal
 	global numeroFilas, memoriaPrincipal,max5,max8
 	numeroPag=-1
 	indiceP=busquedaPaginaMemoriaPrincipal(numP)
@@ -181,16 +182,16 @@ def guardar(pack,numP):
 	
 while(True):
 	codigoLlamado=buzonLlamados.get()
-	if(codigoLlamado==0):
-		parametro=buzonParametros.get()
+	if(codigoLlamado==0): #Llama a Habilitar pagina
+		parametro=buzonParametros.get() #Saco parametros
 		paginaHabilitada=habilitarPagina(parametro)
-		buzonRetornos.put(paginaHabilitada)
-	elif(codigoLlamado==1):
+		buzonRetornos.put(paginaHabilitada) #Envio lo que me retorno la funcion
+	elif(codigoLlamado==1):#Llama a pedir pagina
 		parametro=buzonParametros.get()
 		paginaADevolver=pedirPagina(parametro)
 		buzonRetornos.put(paginaADevolver)
 		
-	elif(codigoLlamado==2):
+	elif(codigoLlamado==2): #Llama a guardar 
 		parametro1=buzonParametros.get()
 		parametro2=buzonParametros.get()
 		numPage=guardar(parametro1,parametro2)
