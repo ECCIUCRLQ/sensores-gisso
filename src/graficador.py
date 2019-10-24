@@ -1,8 +1,16 @@
 import interpreter as interpreter
 import matplotlib.pyplot as plt 
 
+import sys
+
+
 def setup():
-	interpreter.setPage(5,2)
+	teamID = sys.argv[1]
+	sensorID = sys.argv[2]
+	
+	print("ids",teamID,sensorID)
+	
+	interpreter.setPage(teamID,sensorID)
 	print ("hola")
 	#interpreter.getData()
 	
