@@ -2,7 +2,6 @@ import csv
 import struct
 import time
 import random
-#import administradorMemoria as aMemoria
 from ipcqueue import sysvmq
 import threading
 pageTable=[]
@@ -12,9 +11,6 @@ FORMAT='IIfB' # IdentificadorSensor,fecha, dato,bit para verificar dato.
 #Buscar page table
 #Malloc maravilloso 
 #Guardar 
-
-
-
 #HabilitarPagina = 0
 #pedirPagina =1
 #guardar=2
@@ -22,6 +18,8 @@ buzonGeneral=sysvmq.Queue(420)#Buzon para procesos recolectores
 buzonLlamados=sysvmq.Queue(17)#Buzon para solicitar al administrador meter datos.
 buzonRetornos=sysvmq.Queue(16)#Buzon para recibir la respuesta del administrador.
 buzonParametros=sysvmq.Queue(15)
+buzonLlamadoGraficador=sysvmq.Queue(69)
+buzonRetornoGraficador=sysvmq.Queue(469)
 def mallocMaravilloso(sensorId,tamanoPagina): #Agrego en la page table y despues habilito pagina en memoria principal 
 	global pageTable,tamanoPT					#Y despues meto el numero de pagina en la page table 
 	pageTable.append([])
@@ -58,8 +56,7 @@ def pedirDatos(sensorId): # Pido datos por medio de un sensor ID,la interfaz los
 		buzonParametros.put(numeroPaginaSensor[i])
 		paginaAMeter=buzonRetornos.get()
 		matrizRetorno[i].append(paginaAMeter)
-		#matrizRetorno[i].append(aMemoria.pedirPagina(numeroPaginaSensor[i])) #guardo pagina de la memoria en la matriz a retornar
-	return matrizRetorno
+	buzonRetornoGraficador.put(matrizRetorno)
 	
 def buscarSensorId(sensorId):#Busco el sensorId en la page table y me retorna el indice
 	global pageTable,tamanoPT
@@ -118,13 +115,18 @@ def guardar(pack):#Busca el sensor ID, sino esta entonces lo agrega a la page ta
 		pageTable[ind].append(numP)
 	
 while(True):
-
 	try:	
 		packRecolector = buzonGeneral.get_nowait() # get_nowait() revisa el buzon, si esta vacio no pasa nada, y sino recibe el dato para enviarlo
-		guardar(packRecolector)
-		
 	except:
 		pass
+	guardar(packRecolector)
+	sID=-1
+	try:
+		sId=buzonLlamadoGraficador.get_nowait()
+	except:
+		pass
+	if(sID!=-1)
+		pedirDatos(sID)
 	time.sleep(1)
 		
 		

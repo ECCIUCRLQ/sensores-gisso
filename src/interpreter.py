@@ -3,31 +3,10 @@ import time
 import datetime
 import struct 
 
-# Inicio datos/metodos temporales para testeo
 formato = 'If'
-datosSensor = struct.pack(formato,1,1) # en lugar del primer int iria int(time.time())
-datosSensor2 = struct.pack(formato,2,1)
-datosSensor3 = struct.pack(formato,2,1)
-datosSensor4 = struct.pack(formato,4,1)
-datosSensor5 = struct.pack(formato,7,1)
-
-paginaTest = []
-pagina1 = [datosSensor,datosSensor2,datosSensor3,datosSensor4,datosSensor5]
-pagina2 = [datosSensor,datosSensor2,datosSensor3,datosSensor4,datosSensor5]
-pagina3 = [datosSensor,datosSensor2,datosSensor3,datosSensor4,datosSensor5]
-pagina4 = [datosSensor,datosSensor2,datosSensor3,datosSensor4,datosSensor5]
-
-def reserveMemory():
-	for i in range(4):
-		paginaTest.append([])
-
-def definePage():
-	reserveMemory()
-	paginaTest[0].append(pagina1)
-	paginaTest[1].append(pagina2)
-	paginaTest[2].append(pagina3)
-	paginaTest[3].append(pagina4)
-# Fin datos/metodos temporales para testeo
+matrizRetorno = []
+buzonLlamadoGraficador=sysvmq.Queue(69)
+buzonRetornoGraficador=sysvmq.Queue(469)
 
 x_eje = []  # Datos que delimitan
 y_eje = []	# la grafica
@@ -79,13 +58,15 @@ def contar(cantidad_y):
 
 # Recorre la matriz de datos paquete por paquete, llama al método para sacar la hora de cada paquete
 def getData():
-	for i in range(len(paginaTest)):
-		for j in range(len(paginaTest[i][0])):
-			getHour(paginaTest[i][0][j])	
+	for i in range(len(matrizRetorno)):
+		for j in range(len(matrizRetorno[i+2][0])):
+			getHour(matrizRetorno[i+2][0][j+2])	
 	contar(cantidad_y)		
 	x_eje.sort() # El graficador los ocupa en orden
 		
-def setPage():
+def setPage(sensorId):
+	buzonLlamadoGraficador.put(sensorID)
+	matrizRetorno=buzonRetornoGraficador.get()
 	definePage()
 
 def getEjeX():

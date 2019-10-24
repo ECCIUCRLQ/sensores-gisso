@@ -8,8 +8,10 @@ numeroPagina=0
 memoriaPrincipal=[]
 numeroFilas=13
 contadorFilaActual=0
-max8 = 10575
-max5 = 16920
+#max8 = 10575
+#max5 = 16920
+max8 = 8
+max5 = 8
 buzonLlamados=sysvmq.Queue(17)
 buzonRetornos=sysvmq.Queue(16)
 buzonParametros=sysvmq.Queue(15)
@@ -99,8 +101,6 @@ def habilitarPagina(tamanoPagina):
 		memoriaPrincipal[indMemSwap].append(numeroPagina)
 		numeroPagina += 1
 		memoriaPrincipal[indMemSwap].append(tamanoPagina)
-		
-	
 	return numeroPagina-1
 
 
@@ -124,53 +124,62 @@ def pedirPagina(numeroP):
 	
 def paginallenaMemoriaPrincipal(indiceP):
 	print("aqui me caigo")
-	paginallena=False
-	print("Ind:" +str(indiceP))
+	paginaLlena=False
+	print("Ind:" + str(indiceP))
+	print ("Tamano de celdas pagina" + str(memoriaPrincipal[indiceP][1]))
+	print ("Tamano" + str(len(memoriaPrincipal[indiceP])))
 	if(memoriaPrincipal[indiceP][1] == 5):
+		#print("Entre al if que es")
 		if(len(memoriaPrincipal[indiceP]) == max5):
+			#print("Entre a if que dice que si esta llena")
 			paginaLlena = True
 	elif(memoriaPrincipal[indiceP][1] == 8):
 		if(len(memoriaPrincipal[indiceP]) == max8):
 			paginaLlena = True
-	return paginallena
+	#print("Retorna pagina llena con" + str(paginaLlena))
+	return paginaLlena
 	
 def guardar(pack,numP):
 	global numeroFilas, memoriaPrincipal,max5,max8
 	numeroPag=-1
 	indiceP=busquedaPaginaMemoriaPrincipal(numP)
 	print(indiceP)
+	#Si esta en memoria principal
 	if(indiceP!=-1):
+		#print("Se llama a paginaLlena con indice" + str(indiceP))
 		paginaLlena=paginallenaMemoriaPrincipal(indiceP)
 		#Si tiene espacio
+		#print ("Pagina llena de guardar " + str(paginaLlena))
 		if(paginaLlena==False):
 			#Guarda el dato
 			memoriaPrincipal[indiceP].append(pack)
 		#Si esta llena
 		else:
+			#print ("Esta entrando al else que dice que esta llena")
 			pagNueva = habilitarPagina(memoriaPrincipal[indiceP][1])
 			#Ver en que posicion de memoria principal quedo, y luego ya se puede guardar
 			indiceP=busquedaPaginaMemoriaPrincipal(pagNueva)
 			memoriaPrincipal[indiceP].append(pack)
 			numeroPag=pagNueva
+	#Si no esta en memoria principal
 	else:
-		print("Entre al else")
+		#print("Entre al else")
 		indMemSwap=busquedaPaginaSwap()
-		print("Indice swp:" + str(indMemSwap))
+		#print("Indice swap:" + str(indMemSwap))
 		pasarPaginaMPrincipalSecundaria(indMemSwap)
 		pasarPaginaMSecundariaPrincipal(indMemSwap,numP)
 		paginaLlena=paginallenaMemoriaPrincipal(indMemSwap)
-		print("ahhhhhhhhhhhhhhhhh")
 		if(paginaLlena==False):
 			#Para guardar
 			memoriaPrincipal[indMemSwap].append(pack)
 		else:
+			#print ("Esta entrando al otro else en donde se dice que la pagina esta llena")
 			pagNueva=habilitarPagina(memoriaPrincipal[indMemSwap][1])
 			indMemSwap=busquedaPaginaMemoriaPrincipal(pagNueva)
 			memoriaPrincipal[indMemSwap].append(pack)
 			numeroPag=pagNueva
 	return numeroPag
 	
-#NOTA:Antes de llamar a guardar se debe hacer un nuevo pack sin el codigo.
 while(True):
 	codigoLlamado=buzonLlamados.get()
 	if(codigoLlamado==0):
@@ -188,8 +197,6 @@ while(True):
 		numPage=guardar(parametro1,parametro2)
 		buzonRetornos.put(numPage)
 	
-	
-		
 		
 			
 
