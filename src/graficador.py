@@ -2,7 +2,7 @@ import interpreter as interpreter
 import matplotlib.pyplot as plt 
 
 def setup():
-	interpreter.setPage(32)
+	interpreter.setPage(5,2)
 	print ("hola")
 	#interpreter.getData()
 	
@@ -20,7 +20,7 @@ def graficar():
 	
 	# naming the axis 
 	plt.xlabel('Hora(s)')
-	if interpreter.isFloat(): 
+	if interpreter.isBool(): 
 		plt.ylabel('Promedio de Datos') 
 	else:
 		plt.ylabel('Cantidad de Detecciones') 

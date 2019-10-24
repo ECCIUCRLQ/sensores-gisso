@@ -1,3 +1,4 @@
+# coding: utf8
 import csv
 import struct
 import time
@@ -119,6 +120,8 @@ def pedirPagina(numeroP):
 		pasarPaginaMSecundariaPrincipal(indMemSwap,numeroP)
 		 #Se toma de la memoria la pagina deseada
 		paginaADevolver = memoriaPrincipal[indMemSwap][:]
+		
+	#print("PagADevolver: ",paginaADevolver)
 	return paginaADevolver
 	
 def paginallenaMemoriaPrincipal(indiceP): #Verificar por medio de un indice si una pagina esta llena en memoria princk
@@ -189,6 +192,7 @@ while(True):
 	elif(codigoLlamado==1):#Llama a pedir pagina
 		parametro=buzonParametros.get()
 		paginaADevolver=pedirPagina(parametro)
+		print("BUZON RETORNO: ",paginaADevolver)
 		buzonRetornos.put(paginaADevolver)
 		
 	elif(codigoLlamado==2): #Llama a guardar 

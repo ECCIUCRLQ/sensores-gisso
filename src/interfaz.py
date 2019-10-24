@@ -1,3 +1,4 @@
+# coding: utf8
 import csv
 import struct
 import time
@@ -43,6 +44,7 @@ def pedirDatos(sensorId): # Pido datos por medio de un sensor ID,la interfaz los
 	numerosPaginaSensor=[]
 	matrizRetorno = []
 	numeroPaginaSensor=getPaginasSensor(sensorId)
+	print("NUMPAGSENSOR Y ID:",numeroPaginaSensor,sensorId)
 	for i in range(0,len(numeroPaginaSensor)):
 		matrizRetorno.append([])
 		buzonLlamados.put(1)
@@ -51,6 +53,8 @@ def pedirDatos(sensorId): # Pido datos por medio de un sensor ID,la interfaz los
 		paginaAMeter=buzonRetornos.get()
 		print ("pam: ",paginaAMeter,i)
 		matrizRetorno[i].append(paginaAMeter)
+	
+	print("Matriz: ",matrizRetorno)
 	buzonRetornoGraficador.put(matrizRetorno)
 	
 def buscarSensorId(sensorId):#Busco el sensorId en la page table y me retorna el indice
@@ -128,5 +132,5 @@ while(True):
 		pass
 	if(sID!=-1):
 		pedirDatos(sID)
-	time.sleep(1)
+	#time.sleep(1)
 		
