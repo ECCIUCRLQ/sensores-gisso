@@ -35,6 +35,36 @@ Finalmente, se tendrá un graficador que debe poder solicitar todos los datos de
   <img src="https://imgur.com/Iz3uyNp.png"">
 </p>
 
+## Etapa 3
+
+El objetivo de esta etapa es construir una memoria distribuida para el sistema de recolección de datos de sensores del proyecto. A continuación se describen los requerimientos de esta etapa.
+
+### Swapping: 
+Con el objetivo de mantener el servicio siempre listo para atender solicitudes, se contará con dos servicios de localización de páginas: uno activo y otro pasivo. El servicio activo será el que responderá las solicitudes de la interfaz. El servicio pasivo estará disponible para que en caso de que el servicio activo deje de funcionar, el servicio pasivo tomará su lugar y comenzará a responder solicitudes. En cualquier momento un servicio pasivo podrá registrarse para que sirva como soporte en caso de que el activo deje de funcionar.  
+
+### Sistema de archivos:
+
+En cada nodo de datos se contará con un archivo binario (de tamaño a discutir) que simulará ser una unidad de disco. Para implementar este sistema de archivos podrá basarse en cualquier sistema existente, y adaptarlo a las necesidades. De alguna forma, cada equipo deberá organizar las páginas dentro de la unidad. Cualquier estructura de datos, registros, etc. que se necesiten, deberán implementarse localmente en los nodos respectivos.
+
+### Protocolo Memoria Local – Interfaz de memoria Distribuida(ML-ID):
+Este protocolo debe permitir que: la memoria local solicite la asignación de una nueva página de memoria, la memoria local soliciteque se guarde una página, y la memoria local se comunica únicamente con una dirección IP conocida.
+
+### Protocolo Interfaz distribuida –Interfaz distribuida(ID-ID):
+
+Este protocolo debe permitir que: la primera interfaz en el sistema se apodere del rol activo en una dirección IP conocida, una interfaz sea elegida como activa cuando varias lo soliciten al mismo tiempo, y una interfaz pasiva asuma el rol activo cuando la activa no dé señal de vida por más de 10 segundos.
+
+### Protocolo Interfaz distribuida-Nodo de memoria (ID-NM):
+
+Este protocolo debe permitir que: un nodo de memoria comunique que quiere participar como almacenador de datos, la interfaz distribuida almacene una página de memoria en un nodo, y la interfaz de memoria recupere una página de memoria en un nodo.
+
+<p align="center">
+  <img src="https://imgur.com/jhDLah7.png"">
+</p>
+
+
+
+
+
 ### Recursos
 
 * [Raspberry Pi](https://es.wikipedia.org/wiki/Raspberry_Pi).
