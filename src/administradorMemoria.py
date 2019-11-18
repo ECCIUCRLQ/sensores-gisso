@@ -4,6 +4,9 @@ import time
 import random
 from ipcqueue import sysvmq
 import pdb
+import socket
+HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
+PORT = 2000        # Port to listen on (non-privileged ports are > 1023)
 numeroPagina = 0
 memoriaPrincipal = [] #Memoria principal o local
 numeroFilasMemoria = 4
@@ -13,7 +16,10 @@ max5 = 16920
 buzonLlamados = sysvmq.Queue(17)
 buzonRetornos = sysvmq.Queue(16)
 buzonParametros = sysvmq.Queue(15)
-
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((HOST, PORT))
+s.listen()
+conn, addr = s.accept()
 #Codigos de llamados
 #HabilitarPagina = 0
 #pedirPagina =1
@@ -36,8 +42,11 @@ def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a 
 	elif( memoriaPrincipal[indPagSwap][1] == 8 ):
 		tamPag = len(memoriaPrincipal[indPagSwap]) * 8 #Tamano en bytes
 	datosPag = memoriaPrincipal[indPagSwap][:]
-	
-	#Se empaquetan y luego se envian esos datos mediante el protocolo correspondiente.
+	formatoGuardar = "BBI" + str(datosPag) +"s"
+	#Se empaquetan
+	packGuardar = struct.pack(formatoGuardar,opCode,tamPag,datosPag)
+	#Se envian esos datos mediante el protocolo TCP
+	s.sendall(packGuardar)
 		#Con el puerto e IP que estan quemadas para la Interfaz Distribuida.
 	
 	#Para borrar la pagina de memoria local
@@ -60,7 +69,9 @@ def pasarPaginaDistribuidaALocal(indPagSwap, numP):
 	opCode = 1
 	idPagina = numP
 	#Se empaquetan y se envian los datos mediante el protocolo correspondiente.
-
+	formatoPedir = "BB"
+	packPedir = struct.pack(formatoPedir,opCode,idPagina)
+	s.sendall(packPedir)
 	#Se recibe el paquete de respuesta
 	#En caso de que no haya error (creo que se hace viendo el opCode):
 	#Se recibe la pagina solicitada	

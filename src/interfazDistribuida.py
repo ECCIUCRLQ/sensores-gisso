@@ -1,10 +1,17 @@
 import struct
 import random
+import socket
+HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
+PORT = 2000        # Port to listen on (non-privileged ports are > 1023)
 tablaNodos = [] # Columnas: NumeroNodo | IP | EspacioDisponible
 tamanoTablaNodos = 0 #Tamano de la tabla de nodos
 tablaPaginas = [] # Columnas: NumeroPagina | NumeroNodo
 tamanoTablaPaginas = 0 #Tamano de la tabla de paginas
 numeroNodo = 0 #Identificador unico para cada nodo
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind((HOST, PORT))
+s.listen()
+conn, addr = s.accept()
 
 def agregarNodoTabla(ipNodo, espacioNodo):
 	global numeroNodo
