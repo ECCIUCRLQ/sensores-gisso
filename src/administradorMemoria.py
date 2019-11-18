@@ -29,7 +29,7 @@ for i in range(numeroFilasMemoria):
     memoriaPrincipal.append([])
 
 def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a hacer swap y pasa una página (arreglo) a memoria distribuida por medio de un paquete mediante un socket.
-	global memoriaPrincipal
+	global memoriaPrincipal, conn
 	
 	guardado = False #Para ver si la pagina se pudo guardar correctamente en memoria distribuida
 	
@@ -42,7 +42,7 @@ def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a 
 	elif( memoriaPrincipal[indPagSwap][1] == 8 ):
 		tamPag = len(memoriaPrincipal[indPagSwap]) * 8 #Tamano en bytes
 	datosPag = memoriaPrincipal[indPagSwap][:]
-	formatoGuardar = "BBI" + str(datosPag) +"s"
+	formatoGuardar = "BBI" + str(len(datosPag)) +"s"
 	#Se empaquetan
 	packGuardar = struct.pack(formatoGuardar,opCode,tamPag,datosPag)
 	#Se envian esos datos mediante el protocolo TCP
@@ -53,7 +53,9 @@ def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a 
 	del memoriaPrincipal[indPagSwap][:]
 	
 	#Se recibe una confirmacion con: 
-	#opCode = opCode recibido
+	packRecibido = conn.recv(1024)
+	datosPack = struct.unpack('BB',packRecibido)
+	opCode = datosPack[0]
 	#Si no hubo error
 	if(opCode == 2):
 		guardado = True
@@ -73,17 +75,19 @@ def pasarPaginaDistribuidaALocal(indPagSwap, numP):
 	packPedir = struct.pack(formatoPedir,opCode,idPagina)
 	s.sendall(packPedir)
 	#Se recibe el paquete de respuesta
+	packRecibido = conn.recv(1024)
+	formatoConfirmacion = "BB"+ str(len(packRecibido)-2)+"s"
+	datosPack = struct.unpack(formatoConfirmacion,packRecibido)
+	opCodeR = datosPack[0]
 	#En caso de que no haya error (creo que se hace viendo el opCode):
 	#Se recibe la pagina solicitada	
-	idPaginaR = -1 #el -1 se debe cambiar por el idPagina recibida en protocolo
-	datosPagina = 0 # el 0 se debe cambiar por los datos recibidos en protocolo
-
+	datosPagina = packRecibido[2:len(packRecibido)]
 	#Colocar la pagina en memoria local
 	memoriaPrincipal[indPagSwap] = datosPagina[:]
 
 	#opCode = A el opCode recibido
 	#Si no hubo error 
-	if(opCode == 3):
+	if(opCodeR == 3):
 		recibido = True
 	return recibido
 	

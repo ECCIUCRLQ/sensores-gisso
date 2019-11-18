@@ -50,18 +50,26 @@ def mandarAGuardar(numeroNodo, packAGuardar):
 	indiceNodo = buscaNodo(numeroNodo)
 	ipNodo = tablaNodos[indiceNodo][1] #Necesaria para saber a quien se le envia el paquete.
 	#Se envia el paquete a esa IP mediante el respectivo protocolo.
-
+	s.sendall(packGuardar)
 	#Se recibe la respuesta
-	
+	packRecibido = conn.recv(1024)
+	datosPack = struct.unpack('BBI',packRecibido)
+	opCode = datosPack[0]
+
 	#Si todo sale bien 
 	if( opCode == 2 ): #La condicion de este if puede cambiar a la vara del opCode (2), tambien se pude ver como el "Todo salio bien"
-		espacioDisponibleRecibido = 0 #Va a ser lo que se recibe en el paquete de respuesta en vez de ese 0.
+		espacioDisponibleRecibido = datosPack[2] 
+		idPagina = datosPack[1]
 		#Actualizar el espacio disponible en la tabla de nodos
 		tablaNodos[indiceNodo][2] = espacioDisponibleRecibido
 		#Se agrega en la tabla de paginas
 		tablaPaginas[tamanoTablaPaginas].append(idPagina)
 		tablaPaginas[tamanoTablaPaginas].append(numeroNodo)
 		guardado = True 
+		#Enviar paquete de rspuesta a Aministrador de Memoria
+		formatoRespuestaA = "BB" 
+		packRes = struct.pack(formatoRespuestaA,opCode,idPagina)
+		s.sendall(packRes)
 	return guardado
 
 def guardar(packAGuardar):
@@ -95,13 +103,14 @@ def pedirPagina(numeroPagina):
 	opCode = 1
 	idPagina = numeroPagina
 	#Se envia el paquete a ipNodo mediante protocolo correspondiente
+	formatoEnvio = "BB" 
+	packEnvio = struct.pack(formatoEnvio,opCode,idPagina)
+	s.sendall(packEnvio)
 	
 	#Se recibe el paquete de respuesta
-	#opCode = a el opCode recibido en el paquete
-	datosRecibidos = 0 #El 0 se debe cambiar por los datos que recibo en el paquete de respuesta 
-	
+	packRecibido = conn.recv(1024)
 	#Se envia por paquete el paquete recibido al administrador de memoria. (Sin importar su opCode)
-
+	s.sendall(packEnvio)
 """
 while(True):
 	#Estoy escuchando mediante el receive
