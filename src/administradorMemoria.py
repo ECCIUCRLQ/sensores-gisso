@@ -24,7 +24,8 @@ for i in range(numeroFilasMemoria):
 
 def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a hacer swap y pasa una página (arreglo) a memoria distribuida por medio de un paquete mediante un socket.
 	global memoriaPrincipal
-	guardado = False
+	
+	guardado = False #Para ver si la pagina se pudo guardar correctamente en memoria distribuida
 	
 	#Para el paquete de mandar a guardar en M.Distribuida se ocupan los siguientes datos:
 	opCode = 0
@@ -42,15 +43,19 @@ def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a 
 	#Para borrar la pagina de memoria local
 	del memoriaPrincipal[indPagSwap][:]
 	
-	#Se recibe una confirmacion con: (Se debe ver si es necesario verificar lo que recibo.)
-		#opCode (Ver si hubo algun error)
-			#Si hubo error se debe volver a ejecutar este metodo y se devuelve false
-			#Si se guardo bien devuelvo true (creo que solo eso)
-		#idPagina
-		#Si hay algun error que hacer? Se vuelve a enviar a guardar?
+	#Se recibe una confirmacion con: 
+	#opCode = opCode recibido
+	#Si no hubo error
+	if(opCode == 2):
+		guardado = True
+	#idPagina
+	return guardado
 
 def pasarPaginaDistribuidaALocal(indPagSwap, numP):
 	global memoriaPrincipal
+
+	recibido = False #Para ver si la pagina solicitada a memoria distribuida se recibio correctamente.
+
 	#Para el paquete de pedir a la interfaz distribuida una pagina se ocupan los siguientes datos:
 	opCode = 1
 	idPagina = numP
@@ -65,8 +70,11 @@ def pasarPaginaDistribuidaALocal(indPagSwap, numP):
 	#Colocar la pagina en memoria local
 	memoriaPrincipal[indPagSwap] = datosPagina[:]
 
-	#Si hay error (viendo opCode)
-
+	#opCode = A el opCode recibido
+	#Si no hubo error 
+	if(opCode == 3):
+		recibido = True
+	return recibido
 	
 def busquedaPaginaSwap(): #Sirve para localizar el indice de la pagina en la que se va a ser swap.
 	global memoriaPrincipal, max5, max8, numeroFilasMemoria
@@ -111,7 +119,9 @@ def habilitarPagina(tamanoCelda):
 	#Cuando esta llena, entonces se empieza a hacer swap.
 	else:
 		indMemSwap = busquedaPaginaSwap()
-		pasarPaginaLocalADistribuida(indMemSwap)
+		guardado = False
+		while (guardado == False):
+			guardado = pasarPaginaLocalADistribuida(indMemSwap)
 		#Agregar nueva pagina en memoria local
 		memoriaPrincipal[indMemSwap].append(numeroPagina)
 		numeroPagina += 1
@@ -131,8 +141,12 @@ def pedirPagina(numeroP):
 	else:
 		#Hace swap
 		indMemSwap = busquedaPaginaSwap()
-		pasarPaginaLocalADistribuida(indMemSwap)
-		pasarPaginaDistribuidaALocal(indMemSwap,numeroP)
+		guardado = False
+		while (guardado == False):
+			guardado = pasarPaginaLocalADistribuida(indMemSwap)
+		recibido = False
+		while (recibido == False):
+			recibido = 	pasarPaginaDistribuidaALocal(indMemSwap,numeroP)
 		#Se toma de la memoria local la pagina deseada
 		paginaADevolver = memoriaPrincipal[indMemSwap][:]
 		
@@ -186,8 +200,12 @@ def guardar(pack,numP): #Guarda en memoria. Puede tener varias condiciones que l
 		#print("Entre al else")
 		indMemSwap = busquedaPaginaSwap()
 		#print("Indice swap:" + str(indMemSwap))
-		pasarPaginaLocalADistribuida(indMemSwap)
-		pasarPaginaDistribuidaALocal(indMemSwap,numP)
+		guardado = False
+		while (guardado == False):
+			guardado = pasarPaginaLocalADistribuida(indMemSwap)
+		recibido = False
+		while (recibido == False):
+			recibido = pasarPaginaDistribuidaALocal(indMemSwap,numP)
 		paginaLlena = paginallenaMemoriaPrincipal(indMemSwap)
 		#Si tiene espacio 
 		if(paginaLlena == False):

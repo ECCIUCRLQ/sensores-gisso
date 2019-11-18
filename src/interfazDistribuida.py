@@ -46,10 +46,9 @@ def mandarAGuardar(numeroNodo, packAGuardar):
 
 	#Se recibe la respuesta
 	
-	#Si todo sale bien
-	espacioDisponibleRecibido = 0 #Va a ser lo que se recibe en el paquete de respuesta en vez de ese 0. 
-	# Si el espacio  disponible
-	if( espacioDisponibleRecibido < tablaNodos[indiceNodo][2] ): #La condicion de este if puede cambiar a la vara del opCode (2), tambien se pude ver como el "Todo salio bien"
+	#Si todo sale bien 
+	if( opCode == 2 ): #La condicion de este if puede cambiar a la vara del opCode (2), tambien se pude ver como el "Todo salio bien"
+		espacioDisponibleRecibido = 0 #Va a ser lo que se recibe en el paquete de respuesta en vez de ese 0.
 		#Actualizar el espacio disponible en la tabla de nodos
 		tablaNodos[indiceNodo][2] = espacioDisponibleRecibido
 		#Se agrega en la tabla de paginas
@@ -78,6 +77,7 @@ def buscaPagina(numeroPagina):
 
 #Se va a ver si se pasa tambien pack armado por parametro o se vuelve a armar dentro de metodo como se esta haciendo.
 def pedirPagina(numeroPagina):
+	recibido = False #Para ver si la pagina solicitada al nodo se recibio correctamente.
 	#Se busca en la tabla de paginas la pagina solicitada
 	indicePagina = buscaPagina(numeroPagina)
 	nodo = tablaPaginas[indicePagina][1]
@@ -90,8 +90,22 @@ def pedirPagina(numeroPagina):
 	#Se envia el paquete a ipNodo mediante protocolo correspondiente
 	
 	#Se recibe el paquete de respuesta
-	#Si todo sale bien (Se ve con el opCode creo)
-	datosRecibidos = 0 #El 0 se debe cambiar por los datos que recibo en el paquete de respuesta
-	#Se devuelve tambien por paquete creo pero ahora hacia administrador de memoria los datos recibidos y el idPagina recibido.
-	#Si algo sale mal
-	#Igual hay que pasarle al adminMemoria lo recibido, ya sea un -1 o el opCode de error.
+	#opCode = a el opCode recibido en el paquete
+	datosRecibidos = 0 #El 0 se debe cambiar por los datos que recibo en el paquete de respuesta 
+	
+	#Se envia por paquete el paquete recibido al administrador de memoria. (Sin importar su opCode)
+
+"""
+while(True):
+	#Estoy escuchando mediante el receive
+	#Recibo el pack packRec
+	packRec = 0 #Solo para que exista pero es el paquete recibido
+	#Se desarma el paquete en packRec en datosPack
+	datosPack = 0 # Se sustituye el cero por el paquete recibido 
+	opCode = datosPack[0]
+	if(opCode == 0):
+		guardar(packRec)
+	elif(opCode == 1):
+		idPagina = datosPack[1]
+		pedirPagina(idPagina)
+"""

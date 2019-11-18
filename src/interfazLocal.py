@@ -34,7 +34,7 @@ def getPaginasSensor(sensorId):# Busca en la page table y retorna los numeros de
 	encontrado = False
 	numerosPagina = []
 	i = 0
-	while(i<tamanoPT and encontrado==False):
+	while(i < tamanoPT and encontrado == False):
 		if(pageTable[i][0] == sensorId):
 			numerosPagina = pageTable[i][1:]
 			encontrado = True
