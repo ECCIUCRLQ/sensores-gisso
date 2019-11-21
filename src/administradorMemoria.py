@@ -44,7 +44,7 @@ def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a 
 	datosPag = memoriaPrincipal[indPagSwap][:]
 	formatoGuardar = "BBI" + str(len(datosPag)) +"s"
 	#Se empaquetan
-	packGuardar = struct.pack(formatoGuardar,opCode,tamPag,datosPag)
+	packGuardar = struct.pack(formatoGuardar,opCode,idPagina,tamPag,datosPag)
 	#Se envian esos datos mediante el protocolo TCP
 	s.sendall(packGuardar)
 		#Con el puerto e IP que estan quemadas para la Interfaz Distribuida.
@@ -131,6 +131,7 @@ def habilitarPagina(tamanoCelda):
 		numeroPagina += 1
 		memoriaPrincipal[contadorFilaActual].append(tamanoCelda)
 		contadorFilaActual += 1
+		
 	#Cuando esta llena, entonces se empieza a hacer swap.
 	else:
 		indMemSwap = busquedaPaginaSwap()

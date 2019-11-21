@@ -78,6 +78,9 @@ while True:
 	if(diccionario.get(identificador)== None):
 		crearThread(identificador)
 	
+	
+	
+	
 	else:
 		diccionario.get(identificador).put(var)
 		

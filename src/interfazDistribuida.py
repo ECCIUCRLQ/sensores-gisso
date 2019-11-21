@@ -1,6 +1,7 @@
 import struct
 import random
 import socket
+import threading 
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = 2000        # Port to listen on (non-privileged ports are > 1023)
 tablaNodos = [] # Columnas: NumeroNodo | IP | EspacioDisponible
@@ -111,17 +112,24 @@ def pedirPagina(numeroPagina):
 	packRecibido = conn.recv(1024)
 	#Se envia por paquete el paquete recibido al administrador de memoria. (Sin importar su opCode)
 	s.sendall(packEnvio)
-"""
-while(True):
-	#Estoy escuchando mediante el receive
-	#Recibo el pack packRec
-	packRec = 0 #Solo para que exista pero es el paquete recibido
-	#Se desarma el paquete en packRec en datosPack
-	datosPack = 0 # Se sustituye el cero por el paquete recibido 
-	opCode = datosPack[0]
-	if(opCode == 0):
-		guardar(packRec)
-	elif(opCode == 1):
-		idPagina = datosPack[1]
-		pedirPagina(idPagina)
-"""
+
+def accionHiloPrincipal():
+	while(True):
+		#Estoy escuchando mediante el receive
+		#Recibo el pack packRec
+		packRec = 0 #Solo para que exista pero es el paquete recibido
+		#Se desarma el paquete en packRec en datosPack
+		datosPack = 0 # Se sustituye el cero por el paquete recibido 
+		opCode = datosPack[0]
+		if(opCode == 0):
+			guardar(packRec)
+		elif(opCode == 1):
+			idPagina = datosPack[1]
+			pedirPagina(idPagina)
+
+def accionHiloNodos():
+	
+
+hiloPrincipal = threading.Thread(target=accionHiloPrincipal)
+hiloPrincipal.start()
+
