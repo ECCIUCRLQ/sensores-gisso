@@ -5,10 +5,12 @@ import threading
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = 2000        # Port to listen on (non-privileged ports are > 1023)
 tablaNodos = [] # Columnas: NumeroNodo | IP | EspacioDisponible
-tamanoTablaNodos = 0 #Tamano de la tabla de nodos
+tamanoTablaNodos = 0 # Tamano de la tabla de nodos
 tablaPaginas = [] # Columnas: NumeroPagina | NumeroNodo
-tamanoTablaPaginas = 0 #Tamano de la tabla de paginas
-numeroNodo = 0 #Identificador unico para cada nodo
+tamanoTablaPaginas = 0 # Tamano de la tabla de paginas
+numeroNodo = 0 # Identificador unico para cada nodo
+
+#Se crea socket para la comunicacion entre Memoria local e Interfaz distribuida.
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen()
@@ -128,8 +130,27 @@ def accionHiloPrincipal():
 			pedirPagina(idPagina)
 
 def accionHiloNodos():
-	
+	while(True):
+		IPActiva = '127.0.0.1'
+		puerto = 3114
+		sockNodos = socket.socket(socket.AF_INET,socket.SOCK_DGRAM) # Abrir los sockets 
+		sockNodos.bind((IPActiva, puerto))	# Crea la conexion 
+		data, addr = sockNodos.recvfrom(50) # buffer size
+		datosPack = struct.unpack('BI', data)
+		opCode = datosPack[0]
 
+		if(opCode == 5):
+			espacioDisponible = datosPack[1]
+			ip = socket.inet_aton(addr)
+			agregarNodoTabla(ip, espacioDisponible)
+			#Creo paquete de respuesta
+			packRpta = struct.pack('B', 2)
+			sockNodos.sendto(packRpta, (ip, puerto))
+
+#Se crea el hilo que atiende al administrador de memoria. (Guardar y pedir)
 hiloPrincipal = threading.Thread(target=accionHiloPrincipal)
 hiloPrincipal.start()
 
+#Se crea el hilo que atiende a los nodos (Cuando quieren ser nodos)
+hiloNodos = threading.Thread(target=accionHiloNodos)
+hiloNodos.start()
