@@ -1,6 +1,6 @@
 import sys
 import time
-
+import struct
 #Metadatos Generales:
 #-Puntero final de metadatos 4 bytes
 #-Puntero final de datos 4 bytes
@@ -14,7 +14,7 @@ import time
 punteroMeta = 0
 punteroDatos = 4
 
-if( len(sys.argv) < 4 ):
+if( len(sys.argv) < 2 ):
 	print ("NodoMemoria: Error, argumentos insuficientes")
 	exit()
 
@@ -35,7 +35,7 @@ def crearArchivo():
 	archivo.write(puntD.to_bytes(4,byteorder = 'big'))
 	archivo.close()
 	
-def tamDisponible()
+def tamDisponible():
 	global tamanoMax
 	global tamanoDisponible
 	
@@ -88,7 +88,7 @@ def agregarDatos(datos):
 	
 	tamanoDisponible -= datos[1]
 	
-def buscarDatos(idPagina)
+def buscarDatos(idPagina):
 	global punteroMeta
 	
 	inicioDatos = -1
@@ -115,7 +115,47 @@ def buscarDatos(idPagina)
 			indice += 17
 	
 	return datosCompletos
+		
+def test():
 	
+	crearArchivo()
 	
+	datos = bytearray([0,2,3,4,5])
+	datos1 = bytearray([1,2,3,4,5])
+	datos2 = bytearray([2,2,3,4,5])
+	formatoGuardar = "BBI" + str(len(datos)) +"s"
+	formatoGuardar1 = "BBI" + str(len(datos1)) +"s"
+	formatoGuardar2 = "BBI" + str(len(datos2)) +"s"
+	pagID = 2
+	tamPag = len(datos) # * 5 con este 5 lo mandan desde mem local
+	
+	print ("Len datos", len(datos))
+	
+	packGuardar = struct.pack(formatoGuardar,0,1,tamPag,datos)
+	packGuardar1 = struct.pack(formatoGuardar1,0,2,tamPag,datos1)
+	packGuardar2 = struct.pack(formatoGuardar2,0,3,tamPag,datos2)
+	
+	paquete = struct.unpack(formatoGuardar,packGuardar)
+	paquete1 = struct.unpack(formatoGuardar1,packGuardar1)
+	paquete2 = struct.unpack(formatoGuardar2,packGuardar2)
+	
+	paqueteQuiero = [paquete[1],paquete[2],paquete[3]]
+	paqueteQuiero1 = [paquete1[1],paquete1[2],paquete1[3]]
+	paqueteQuiero2 = [paquete2[1],paquete2[2],paquete2[3]]
+	
+	agregarDatos(paqueteQuiero)
+	agregarDatos(paqueteQuiero1)
+	agregarDatos(paqueteQuiero2)
+	
+	print ("Paquete Guarde:",datos)
+	
+	datosVuelta = buscarDatos(1)
+	datosVuelta1 = buscarDatos(2)
+	datosVuelta2 = buscarDatos(3)
+	
+	print ("Paquete pedi:", datosVuelta)
+	print ("Paquete pedi:", datosVuelta1)
+	print ("Paquete pedi:", datosVuelta2)
 
 
+test()
