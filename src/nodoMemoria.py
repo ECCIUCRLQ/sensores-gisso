@@ -161,22 +161,22 @@ def recibirTCP():
 	PORT = 3114        # Port to listen on (non-privileged ports are > 1023)
 	print("hola")
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-		s.bind(('0.0.0.0', PORT))
+		s.bind(('10.1.138.93', PORT))
 		print("hola22")
 		s.listen()
 		print("hola23")
-		conn, addr = s.accept()
-		print("hola54")
-		print(adrr)
-		with conn:
-			print('Connected by', addr)
-			while True:
+		while True:
+			conn, addr = s.accept()
+			print("hola54")
+			print(addr)
+			with conn:
+				print('Connected by', addr)
 				data = conn.recv(1024)
-				if not data:
-					break
+				print("Data: ", data)
+				
 				conn.sendall(data)
 		
-	
+	#socket.close(0)
 def test():
 	
 	crearArchivo()
