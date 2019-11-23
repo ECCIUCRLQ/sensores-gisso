@@ -111,6 +111,9 @@ def buscarDatos(idPagina):
 			tam = int.from_bytes(archivo.read(4), byteorder = 'big')
 			archivo.seek(indice+5)
 			inicioDatos = int.from_bytes(archivo.read(4), byteorder = 'big')
+			archivo.seek(indice+13)
+			fecha = int(time.time())
+			archivo.write(fecha.to_bytes(4,byteorder = 'big'))
 			archivo.seek(inicioDatos)
 			datosCompletos = archivo.read(tam)
 			
@@ -122,6 +125,7 @@ def buscarDatos(idPagina):
 		
 def broadcast():
 	global IDIP
+	global tamanoDisponible
 	
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -130,19 +134,24 @@ def broadcast():
 	sock.setblocking(0)
 
 	server_address = ('255.255.255.255', 5000)
-	message = 'pfg_ip_broadcast_cl'
 
+	paqueteBcast = struct.pack('BI',5,tamanoDisponible)
 	try:
 		while True:
 			# Send data
 			#print('Ivanxd sending: ' + message)
-			sent = sock.sendto(message.encode(), server_address)
+			sent = sock.sendto(paqueteBcast, server_address)
 
 			# Receive response
 			#print('waiting to receive')
 			try:
+				
 				data, server = sock.recvfrom(4096)
-				if data.decode('UTF-8') == 'pfg_ip_response_serv':
+				
+				data = struct.unpack('B',data)
+				print("Data ",data)
+				#if data.decode('UTF-8') == '2':
+				if data[0] == 2:
 					print('Received confirmation')
 					IDIP = server[0]
 					print('Server ip: ' + str(server[0]) )
@@ -151,13 +160,14 @@ def broadcast():
 					print('Verification failed')
 			except:
 				print('Soy nodo deme pelota')
+			
 			time.sleep(2)	
 	finally:	
 		sock.close()
 	
 def recibirTCP():
 	global IDIP
-	  
+	FormatoTCP = "BBI"
 	PORT = 3114        # Port to listen on (non-privileged ports are > 1023)
 	print("hola")
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -172,6 +182,16 @@ def recibirTCP():
 			with conn:
 				print('Connected by', addr)
 				data = conn.recv(1024)
+				opCode = int.from_bytes(data[0:1], byteorder = 'big')
+				idPagina = int.from_bytes(data[1:2], byteorder = 'big')
+				tamanio = int.from_bytes(data[2:5], byteorder = 'big')
+				data = data[5:len(data)]
+				print(len(data))
+				print("asssssssssssssssta: ", opCode)
+				print("asssssssssssssssta: ", idPagina)
+				print("asssssssssssssssta: ", tamanio)
+				print("asssssssssssssssta: ", data)
+				#data = struct.unpack(FormatoTCP,data)
 				print("Data: ", data)
 				
 				conn.sendall(data)
