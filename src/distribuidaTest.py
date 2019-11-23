@@ -7,27 +7,23 @@ import sys
 MY_IP = '10.1.137.177'  # Mi IP
 IP_Nodo = ''
 
+formatoBcast = 'BI'
+PUERTO_BC = 5000
+PORT_NM = 3114
+
 def crearPaquete():
 	datos = bytearray([0,2,3,4,5])
-
 	formatoGuardar = "BBI" + str(len(datos)) +"s"
-	formato = "BBIB"
 	tamPag = len(datos)
 	packGuardar = struct.pack(formatoGuardar,0,1,tamPag,datos)
 
 	return packGuardar
 
 def sendTCP(paquete, IP_Nodo):
-	
-	PORT_NM = 3114
-	
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_send:
-		print("holis1",IP_Nodo)
-		
 		while True:
 			try:
 				socket_send.connect((IP_Nodo, PORT_NM))
-				print("holis2")
 				socket_send.sendall(paquete)
 				data = socket_send.recvfrom(4096)
 				if(data != 0):
@@ -41,25 +37,25 @@ def sendTCP(paquete, IP_Nodo):
 def getNodeIP():
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setblocking(0)
-	server_address = ('', 5000)
-
+	server_address = ('', PUERTO_BC)
 	sock.bind(server_address)
 
 	response = 'pfg_ip_response_serv'
-
+	
+	opCode = 2
 	while True:
 		try:
 			data, address = sock.recvfrom(4096)
 			if(data != 0):
-				data = str(data.decode('UTF-8'))
+				data = struct.unpack(formatoBcast, data)
 				
-				IP_Nodo = address[0]
-				print(IP_Nodo)		
+				IP_Nodo = address[0]	
 				
-				if data == 'pfg_ip_broadcast_cl': #aqui hay que chequear que el opcode del paquete haya sido el esperado, si no reenviar
+				if data[0] == 5: #aqui hay que chequear que el opcode del paquete haya sido el esperado, si no reenviar
 					print('Soy ID le di pelota')
-					sent = sock.sendto(response.encode(), address)
-				break		
+					paqueteRespuesta = struct.pack('B',opCode)
+					sent = sock.sendto(paqueteRespuesta, address)
+				break			
 		except:
 			print ("Esperando")
 			time.sleep(2)
@@ -69,9 +65,6 @@ def getNodeIP():
 def main():	
 
 	IP_Nodo = getNodeIP()
-		
-	print("IP_Nodo", IP_Nodo)	
-
 	paquete = crearPaquete()
 	
 	sendTCP(paquete, IP_Nodo)	
