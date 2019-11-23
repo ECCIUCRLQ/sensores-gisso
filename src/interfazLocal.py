@@ -23,11 +23,11 @@ def mallocMaravilloso(sensorId,tamanoCelda): #Agrego en la page table y despues 
 	buzonLlamados.put(0) #Para llamar a habilitarPagina
 	#print("TamanoPagina",tamanoPagina)
 	buzonParametros.put(tamanoCelda)
-	nuevaPag = buzonRetornos.get()
+	nuevaPag = buzonRetornos.get() 
 	pageTable[tamanoPT].append(nuevaPag)
 	tamanoPT += 1
-	print("Malloc")
-	print("PageTable:",pageTable)
+	#print("Malloc")
+	#print("PageTable:",pageTable)
 	
 def getPaginasSensor(sensorId):# Busca en la page table y retorna los numeros de pagina referentes a un sensorId, lo utiliza pedirDatos()
 	global pageTable,tamanoPT
@@ -80,11 +80,13 @@ def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
 	datoAleer = var[3]
 	packUtil = 0
 	#packUtil=[var[1],var[2]]
-	
+	#print(var)
 	if(datoAleer == 0):
 		packUtil = struct.pack('IB',var[1],var[2])
 	elif(datoAleer == 1):
-		packUtil = struct.pack('II',var[1],var[2])
+		#print (var[1])
+		#print (var[2])
+		packUtil = struct.pack('II',var[1],((int)(var[2])) )
 	elif(datoAleer == 2):
 		packUtil = struct.pack('If',var[1],var[2])
 		
@@ -107,19 +109,20 @@ def guardar(pack):#Busca el sensor ID, sino esta entonces lo agrega a la page ta
 	ind = buscarSensorId(getSensorId(pack))
 	if(ind == -1):
 		tamCelda = getTamanoCelda(pack)
+		print("Llama a mallocMaravilloso")
 		mallocMaravilloso(getSensorId(pack),tamCelda)
 	packDatos = datoUtil(pack)
 	buzonLlamados.put(2) #Para llamar a guardar()
 	buzonParametros.put(packDatos) #Para pasar el pack por parametro
-	print(pageTable[ind][len(pageTable[ind])-1])
+	#print(pageTable[ind][len(pageTable[ind])-1])
 	buzonParametros.put(pageTable[ind][len(pageTable[ind])-1]) #Para pasar el idPagina actual asociado a ese sensor.
 	numP = buzonRetornos.get()
 	#Si le habilito a el sensor una pagina nueva
 	if(numP != -1):
 		#Se agrega la pagina a la page table.
 		pageTable[ind].append(numP)
-		print("Guardar")
-		print("PageTable:",pageTable)
+		#print("Guardar")
+		#print("PageTable:",pageTable)
 		
 	
 	
@@ -130,6 +133,7 @@ while(True):
 	except:
 		pass	
 	if 	(packRecolector != -1): # Si pack recolector es distinto de -1 lo guarda
+		#print (packRecolector)
 		guardar(packRecolector)
 	sID = -1
 	try:

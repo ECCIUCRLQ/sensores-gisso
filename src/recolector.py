@@ -24,7 +24,7 @@ def correr(nombre):
 	buzComun = sysvmq.Queue(420)
 	sid = nombre #Identificador
 	#print("Corriendo: " + str(sid))
-	buz =sysvmq.Queue(nombre)	#crea buzon 
+	buz = sysvmq.Queue(nombre)	#crea buzon 
 	while True:
 		print(nombre)
 		#time.sleep(2)
