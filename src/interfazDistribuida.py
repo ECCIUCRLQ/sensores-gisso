@@ -2,6 +2,7 @@ import struct
 import random
 import socket
 import threading 
+import signal
 
 tablaNodos = [] # Columnas: NumeroNodo | IP | EspacioDisponible
 tamanoTablaNodos = 0 # Tamano de la tabla de nodos
@@ -17,12 +18,58 @@ socketMLocal.bind((HOST, PORT))
 socketMLocal.listen()
 conn, addr = socketMLocal.accept() 
 
-#Se crea socket para la comunicacion entre Memoria distribuida y nodo memoria (UDP)
-IPActiva = '127.0.0.1'
 puertoNodos = 3114
-socketNodos = socket.socket(socket.AF_INET,socket.SOCK_DGRAM) # Abrir los sockets
-socketNodos.bind((IPActiva, puertoNodos))	# Crea la conexion 
 
+#Se crea socket para la comunicacion entre Memoria distribuida y nodo memoria mediante broadcast (UDP)
+IPActiva = '127.0.0.1'
+PORT_BC_NM = 5000
+socketNodos = socket.socket(socket.AF_INET,socket.SOCK_DGRAM) # Abrir los sockets
+socketNodos.bind((IPActiva, PORT_BC_NM))	# Crea la conexion 
+
+#Bool para poder matar a los hilos secundarios
+killHilos = False
+
+#Metodo para interrupcion
+def keyboardInterruptHandler(signal, frame):
+	global killHilos
+	killHilos = True
+	exit(0)
+signal.signal(signal.SIGINT, keyboardInterruptHandler)
+
+#Metodo para la comunicacion entre Memoria distribuida y los nodos de memoria (TCP)
+def sendTCPNodo(paquete, IP_Nodo):
+	global puertoNodos
+	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_send:
+		packRetorno = 0
+		while True:
+			try:
+				socket_send.connect((IP_Nodo, puertoNodos))
+				socket_send.sendall(paquete)
+				data = socket_send.recvfrom(4096)
+				if(data != 0):
+					packRetorno = data
+					socket_send.close()
+					break
+				
+			except:
+				pass	
+	return packRetorno
+
+#Metodo para la respuesta
+def sendRptaBC(paquete, IP_Nodo):
+	global puertoNodos
+	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_send:
+		packRetorno = 0
+		while True:
+			try:
+				socket_send.connect((IP_Nodo, puertoNodos))
+				socket_send.sendall(paquete)
+				socket_send.close()
+				break
+				
+			except:
+				pass	
+	return packRetorno
 
 def agregarNodoTabla(ipNodo, espacioNodo):
 	global numeroNodo
@@ -61,10 +108,8 @@ def mandarAGuardar(numeroNodo, packAGuardar):
 	#Se busca el nodo en la tabla de nodos para obtener su IP
 	indiceNodo = buscaNodo(numeroNodo)
 	ipNodo = tablaNodos[indiceNodo][1] #Necesaria para saber a quien se le envia el paquete.
-	#Se envia el paquete a esa IP mediante el respectivo 
-	socketNodos.sendto(packGuardar, (ipNodo, puertoNodos))
-	#Se recibe la respuesta
-	packRecibido, addr = socketNodos.recvfrom(50) # buffer size
+	#Se envia el paquete a esa IP mediante el respectivo protocolo TCP y se recibe la respuesta
+	packRecibido = sendTCPNodo(packGuardar, ipNodo) #Podria recibir 0
 	datosPack = struct.unpack('BBI',packRecibido)
 	opCode = datosPack[0]
 	#Si todo sale bien 
@@ -113,16 +158,14 @@ def pedirPagina(numeroPagina):
 	#Para poder armar el paquete de pedir se necesitan los siguientes datos:
 	opCode = 1
 	idPagina = numeroPagina
-	#Se envia el paquete a ipNodo mediante protocolo correspondiente
 	formatoEnvio = "BB" 
 	packEnvio = struct.pack(formatoEnvio,opCode,idPagina)
-	socketNodos.sendto(packEnvio, (ipNodo, puertoNodos))
-	
-	#Se recibe el paquete de respuesta
-	packRecibido, addr = socketNodos.recvfrom(50) # buffer size
+	#Se envia el paquete a ipNodo mediante protocolo correspondiente y se recibe el paquete de respuesta
+	packRecibido = sendTCPNodo(packEnvio,ipNodo) #podria recibir 0
 
 	#Se envia por paquete el paquete recibido al administrador de memoria. (Sin importar su opCode)
 	socketMLocal.sendall(packRecibido)
+
 
 def accionHiloPrincipal():
 	while(True):
@@ -137,8 +180,8 @@ def accionHiloPrincipal():
 			pedirPagina(idPagina)
 
 def accionHiloNodos():
-	global puertoNodos, socketNodos
-	while(True):
+	global PORT_BC_NM, socketNodos, killHilos
+	while(killHilos == False):
 		data, addr = socketNodos.recvfrom(50) # buffer size
 		datosPack = struct.unpack('BI', data)
 		opCode = datosPack[0]
@@ -149,12 +192,11 @@ def accionHiloNodos():
 			agregarNodoTabla(ip, espacioDisponible)
 			#Creo paquete de respuesta
 			packRpta = struct.pack('B', 2)
-			socketNodos.sendto(packRpta, (ip, puertoNodos))
-
-#Se crea el hilo que atiende al administrador de memoria. (Guardar y pedir)
-hiloPrincipal = threading.Thread(target=accionHiloPrincipal)
-hiloPrincipal.start()
+			sendRptaBC(packRpta, ip)
 
 #Se crea el hilo que atiende a los nodos (Cuando quieren ser nodos)
 hiloNodos = threading.Thread(target=accionHiloNodos)
 hiloNodos.start()
+
+#(Guardar y pedir)
+accionHiloPrincipal()
