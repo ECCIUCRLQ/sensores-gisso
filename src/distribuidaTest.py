@@ -4,7 +4,7 @@ import socket
 import time
 import sys
 
-MY_IP = '10.1.137.177'  # Mi IP
+MY_IP = '10.1.138.103'  # Mi IP
 IP_Nodo = ''
 
 formatoBcast = 'BI'
@@ -13,10 +13,13 @@ PORT_NM = 3114
 
 def crearPaquete():
 	datos = bytearray([0,2,3,4,5])
-	formatoGuardar = "BBI" + str(len(datos)) +"s"
-	tamPag = len(datos)
-	packGuardar = struct.pack(formatoGuardar,0,1,tamPag,datos)
-
+	formatoGuardar = "=BBI"
+	tamPag = int(len(datos))
+	print (tamPag)
+	packGuardar = struct.pack(formatoGuardar,0,1,tamPag)
+	packGuardar += datos
+	
+	print (packGuardar)
 	return packGuardar
 
 def sendTCP(paquete, IP_Nodo):

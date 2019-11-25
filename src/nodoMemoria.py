@@ -171,7 +171,7 @@ def recibirTCP():
 	PORT = 3114        # Port to listen on (non-privileged ports are > 1023)
 	print("hola")
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-		s.bind(('10.1.138.93', PORT))
+		s.bind(('0.0.0.0', PORT))
 		print("hola22")
 		s.listen()
 		print("hola23")
@@ -182,15 +182,22 @@ def recibirTCP():
 			with conn:
 				print('Connected by', addr)
 				data = conn.recv(1024)
-				opCode = int.from_bytes(data[0:1], byteorder = 'big')
-				idPagina = int.from_bytes(data[1:2], byteorder = 'big')
-				tamanio = int.from_bytes(data[2:5], byteorder = 'big')
-				data = data[5:len(data)]
+				
+				# ~ opCode = int.from_bytes(data[0:1], byteorder = 'big')
+				# ~ idPagina = int.from_bytes(data[1:2], byteorder = 'big')
+				# ~ tamanio = int.from_bytes(data[2:5], byteorder = 'big')
+				# ~ data = data[5:len(data)]
+				
+				opCode = struct.unpack("B", data[0:1])[0]
+				idPagina = struct.unpack("B", data[1:2])[0]
+				tamanio = struct.unpack("I", data[2:6])[0]
+				datos = data[6:]
+				
 				print(len(data))
 				print("asssssssssssssssta: ", opCode)
 				print("asssssssssssssssta: ", idPagina)
 				print("asssssssssssssssta: ", tamanio)
-				print("asssssssssssssssta: ", data)
+				print("asssssssssssssssta: ", datos)
 				#data = struct.unpack(FormatoTCP,data)
 				print("Data: ", data)
 				
