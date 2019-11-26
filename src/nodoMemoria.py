@@ -155,20 +155,14 @@ def recibirTCP():
 	
 	FormatoTCP = "=BBI"
 	PORT = 3114        # Port to listen on (non-privileged ports are > 1023)
-	print("hola")
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 		s.bind(('', PORT))
-		print("hola22")
 		s.listen()
-		print("hola23")
 		while True:
 			conn, addr = s.accept()
-			print("hola54")
-			print(addr)
+			print("Conectado a: ",addr)
 			with conn:
-				print('Connected by', addr)
 				data = conn.recv(BUFFER_SIZE)
-				print(data)
 				# ~ opCode = int.from_bytes(data[0:1], byteorder = 'big')
 				# ~ idPagina = int.from_bytes(data[1:2], byteorder = 'big')
 				# ~ tamanio = int.from_bytes(data[2:5], byteorder = 'big')
