@@ -191,4 +191,10 @@ def main():
 	print ("MAC", getMAC())
 	
 main()
+
+						# Me apropio de la IP global para la interfaz
+
+						#os.system('ifconfig eth0 down')
+						#os.system('ifconfig eth0 ' + str(self.disInter.gloabal_ip))
+						#os.system('ifconfig eth0 up')
 	
