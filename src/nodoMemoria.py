@@ -17,6 +17,8 @@ import struct
 punteroMeta = 0
 punteroDatos = 4
 IDIP = 0
+BUFFER_SIZE = 692000
+SOCKET_BC = 6000
 
 sendBcast = 0
 
@@ -134,7 +136,7 @@ def broadcast():
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	
-	server_address = ('255.255.255.255', 6000)
+	server_address = ('255.255.255.255', SOCKET_BC)
 
 	paqueteBcast = struct.pack('=BI',5,tamanoDisponible)
 	try:
@@ -155,7 +157,7 @@ def recibirTCP():
 	PORT = 3114        # Port to listen on (non-privileged ports are > 1023)
 	print("hola")
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-		s.bind(('0.0.0.0', PORT))
+		s.bind(('', PORT))
 		print("hola22")
 		s.listen()
 		print("hola23")
@@ -165,7 +167,7 @@ def recibirTCP():
 			print(addr)
 			with conn:
 				print('Connected by', addr)
-				data = conn.recv(1024)
+				data = conn.recv(BUFFER_SIZE)
 				print(data)
 				# ~ opCode = int.from_bytes(data[0:1], byteorder = 'big')
 				# ~ idPagina = int.from_bytes(data[1:2], byteorder = 'big')
