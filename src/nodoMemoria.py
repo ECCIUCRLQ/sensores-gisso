@@ -133,33 +133,13 @@ def broadcast():
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-	#sock.settimeout(5)
-	#sock.setblocking(0)
-
+	
 	server_address = ('255.255.255.255', 6000)
 
 	paqueteBcast = struct.pack('=BI',5,tamanoDisponible)
 	try:
 		while sendBcast == 0:
-			
 			sent = sock.sendto(paqueteBcast, server_address)
-
-			
-			# ~ try:
-				
-				# ~ data, server = sock.recvfrom(4096)
-				
-				# ~ data = struct.unpack('B',data)
-				# ~ print("Data ",data)
-				# ~ #if data.decode('UTF-8') == '2':
-				# ~ if data[0] == 2:
-					# ~ print('Received confirmation')
-					# ~ IDIP = server[0]
-					# ~ print('Server ip: ' + str(server[0]) )
-					# ~ break
-				# ~ else:
-					# ~ print('Verification failed')
-			# ~ except:
 			print('Soy nodo deme pelota')
 			
 			time.sleep(1)	
@@ -234,12 +214,45 @@ def recibirTCP():
 				# ~ conn.sendall(data)
 		
 	socket.close()
+def comLs():
+	global punteroMeta
+	
+	
+	while True:
+		commando = str(input())
+		indice = 8
+		if(commando == "ls"):
+			archivo = open("nodoMemoria.bin", 'br')
+			archivo.seek(punteroMeta)
+			finMeta = int.from_bytes(archivo.read(4), byteorder = 'big')
+			print("FechaCreacion\t\t\tFechaConsulta\t\t\tID\tTamano")
+			while(indice < finMeta):
+				archivo.seek(indice)
+				identificador = int.from_bytes(archivo.read(1), byteorder = 'big')
+				archivo.seek(indice+1)
+				tam = int.from_bytes(archivo.read(4), byteorder = 'big')
+				archivo.seek(indice+5)
+				inicioDatos = int.from_bytes(archivo.read(4), byteorder = 'big')
+				archivo.seek(indice+9)
+				fechaCrea = int.from_bytes(archivo.read(4), byteorder = 'big')
+				fechaCrea = time.ctime(fechaCrea)
+				archivo.seek(indice+13)
+				fechaCons = int.from_bytes(archivo.read(4), byteorder = 'big')
+				fechaCons = time.ctime(fechaCons)
+				print((fechaCrea)+"\t"+(fechaCons)+"\t"+str(identificador)+"\t"+str(tam))
+				indice += 17
+			archivo.close()
+		else:
+			print("El comando no existe")
+		
 def test():
 	
 	
 	crearArchivo()
-	thread = threading.Thread(target=broadcast)
-	thread.start()
+	threadBcast = threading.Thread(target=broadcast)
+	threadBcast.start()
+	threadLs = threading.Thread(target=comLs)
+	threadLs.start()
 	while True:
 		recibirTCP()
 
