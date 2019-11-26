@@ -1,5 +1,6 @@
 import sys
 import socket
+import threading
 #from socket import *
 import time
 import struct
@@ -16,6 +17,8 @@ import struct
 punteroMeta = 0
 punteroDatos = 4
 IDIP = 0
+
+sendBcast = 0
 
 if( len(sys.argv) < 2 ):
 	print ("NodoMemoria: Error, argumentos insuficientes")
@@ -124,50 +127,51 @@ def buscarDatos(idPagina):
 		
 		
 def broadcast():
-	global IDIP
 	global tamanoDisponible
+	global sendBcast
 	
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	#sock.settimeout(5)
-	sock.setblocking(0)
+	#sock.setblocking(0)
 
-	server_address = ('255.255.255.255', 5000)
+	server_address = ('255.255.255.255', 6000)
 
-	paqueteBcast = struct.pack('BI',5,tamanoDisponible)
+	paqueteBcast = struct.pack('=BI',5,tamanoDisponible)
 	try:
-		while True:
-			# Send data
-			#print('Ivanxd sending: ' + message)
+		while sendBcast == 0:
+			
 			sent = sock.sendto(paqueteBcast, server_address)
 
-			# Receive response
-			#print('waiting to receive')
-			try:
-				
-				data, server = sock.recvfrom(4096)
-				
-				data = struct.unpack('B',data)
-				print("Data ",data)
-				#if data.decode('UTF-8') == '2':
-				if data[0] == 2:
-					print('Received confirmation')
-					IDIP = server[0]
-					print('Server ip: ' + str(server[0]) )
-					break
-				else:
-					print('Verification failed')
-			except:
-				print('Soy nodo deme pelota')
 			
-			time.sleep(2)	
+			# ~ try:
+				
+				# ~ data, server = sock.recvfrom(4096)
+				
+				# ~ data = struct.unpack('B',data)
+				# ~ print("Data ",data)
+				# ~ #if data.decode('UTF-8') == '2':
+				# ~ if data[0] == 2:
+					# ~ print('Received confirmation')
+					# ~ IDIP = server[0]
+					# ~ print('Server ip: ' + str(server[0]) )
+					# ~ break
+				# ~ else:
+					# ~ print('Verification failed')
+			# ~ except:
+			print('Soy nodo deme pelota')
+			
+			time.sleep(1)	
 	finally:	
 		sock.close()
+		print("Termino Bcast")
 	
 def recibirTCP():
-	global IDIP
-	FormatoTCP = "BBI"
+	global sendBcast
+	global tamanoDisponible
+	
+	FormatoTCP = "=BBI"
 	PORT = 3114        # Port to listen on (non-privileged ports are > 1023)
 	print("hola")
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -182,69 +186,61 @@ def recibirTCP():
 			with conn:
 				print('Connected by', addr)
 				data = conn.recv(1024)
-				
+				print(data)
 				# ~ opCode = int.from_bytes(data[0:1], byteorder = 'big')
 				# ~ idPagina = int.from_bytes(data[1:2], byteorder = 'big')
 				# ~ tamanio = int.from_bytes(data[2:5], byteorder = 'big')
 				# ~ data = data[5:len(data)]
 				
-				opCode = struct.unpack("B", data[0:1])[0]
-				idPagina = struct.unpack("B", data[1:2])[0]
-				tamanio = struct.unpack("I", data[2:6])[0]
-				datos = data[6:]
+				opCode = struct.unpack("=B", data[0:1])[0]
 				
-				print(len(data))
-				print("asssssssssssssssta: ", opCode)
-				print("asssssssssssssssta: ", idPagina)
-				print("asssssssssssssssta: ", tamanio)
-				print("asssssssssssssssta: ", datos)
-				#data = struct.unpack(FormatoTCP,data)
-				print("Data: ", data)
+				if(opCode == 0):
+					print("Guardando")
+					idPagina = struct.unpack("=B", data[1:2])[0]
+					tamanio = struct.unpack("=I", data[2:6])[0]
+					datos = data[6:]
+					print("Datos ",datos)
+					datosGuardar = (idPagina,tamanio,datos)
+					agregarDatos(datosGuardar)
+					mandar = struct.pack("=BBI",2,idPagina,tamanoDisponible)
+					conn.sendall(mandar)
+					print("Guardado, ",mandar)
+					
+				elif(opCode == 1):	
+					print("Buscando")
+					idPagina = struct.unpack("=B", data[1:2])[0]
+					print("ID pagina ",idPagina)
+					correcto = buscarDatos(idPagina)
+					if(correcto != -1):
+						correcto = struct.pack("=B",3)
+						correcto = correcto + datos
+						
+					else:
+						correcto = struct.pack("=B",4)
+						
+					conn.sendall(correcto)
+					print("Buscado ",correcto)
+				elif(opCode == 2):
+					sendBcast = 1
+					
+				# ~ print(len(data))
+				# ~ print("asssssssssssssssta: ", opCode)
+				# ~ print("asssssssssssssssta: ", idPagina)
+				# ~ print("asssssssssssssssta: ", tamanio)
+				# ~ print("asssssssssssssssta: ", datos)
+				# ~ #data = struct.unpack(FormatoTCP,data)
+				# ~ print("Data: ", data)
 				
-				conn.sendall(data)
+				# ~ conn.sendall(data)
 		
-	#socket.close(0)
+	socket.close()
 def test():
 	
+	
 	crearArchivo()
-	broadcast()
-	recibirTCP()
-	# ~ datos = bytearray([0,2,3,4,5])
-	# ~ datos1 = bytearray([1,2,3,4,5])
-	# ~ datos2 = bytearray([2,2,3,4,5])
-	# ~ formatoGuardar = "BBI" + str(len(datos)) +"s"
-	# ~ formatoGuardar1 = "BBI" + str(len(datos1)) +"s"
-	# ~ formatoGuardar2 = "BBI" + str(len(datos2)) +"s"
-	# ~ pagID = 2
-	# ~ tamPag = len(datos) # * 5 con este 5 lo mandan desde mem local
-	
-	# ~ print ("Len datos", len(datos))
-	
-	# ~ packGuardar = struct.pack(formatoGuardar,0,1,tamPag,datos)
-	# ~ packGuardar1 = struct.pack(formatoGuardar1,0,2,tamPag,datos1)
-	# ~ packGuardar2 = struct.pack(formatoGuardar2,0,3,tamPag,datos2)
-	
-	# ~ paquete = struct.unpack(formatoGuardar,packGuardar)
-	# ~ paquete1 = struct.unpack(formatoGuardar1,packGuardar1)
-	# ~ paquete2 = struct.unpack(formatoGuardar2,packGuardar2)
-	
-	# ~ paqueteQuiero = [paquete[1],paquete[2],paquete[3]]
-	# ~ paqueteQuiero1 = [paquete1[1],paquete1[2],paquete1[3]]
-	# ~ paqueteQuiero2 = [paquete2[1],paquete2[2],paquete2[3]]
-	
-	# ~ agregarDatos(paqueteQuiero)
-	# ~ agregarDatos(paqueteQuiero1)
-	# ~ agregarDatos(paqueteQuiero2)
-	
-	# ~ print ("Paquete Guarde:",datos)
-	
-	# ~ datosVuelta = buscarDatos(1)
-	# ~ datosVuelta1 = buscarDatos(2)
-	# ~ datosVuelta2 = buscarDatos(3)
-	
-	# ~ print ("Paquete pedi:", datosVuelta)
-	# ~ print ("Paquete pedi:", datosVuelta1)
-	# ~ print ("Paquete pedi:", datosVuelta2)
-
+	thread = threading.Thread(target=broadcast)
+	thread.start()
+	while True:
+		recibirTCP()
 
 test()
