@@ -28,8 +28,8 @@ def crearPaquete(ID):
 	formatoGuardar = "=BBI"
 	tamPag = int(len(datos))
 	packGuardar = struct.pack(formatoGuardar,0,ID,tamPag)
-	packGuardar += datos
-	
+	packGuardar += datos + datos
+	print("Paaaaaaaaa: ",packGuardar)
 	return packGuardar
 
 def crearPaquetePedir():
@@ -139,18 +139,18 @@ def enviarQuieroSer():
 		print("Termino Bcast")
 	return 0
 
-def peleitas(que_quiere, mac_contrincante, my_mac):
-	quiero_ser_activa = 0
-	soy_activa = 1
-	keep_alive = 2
+# ~ def peleitas(que_quiere, mac_contrincante, my_mac):
+	# ~ quiero_ser_activa = 0
+	# ~ soy_activa = 1
+	# ~ keep_alive = 2
 	
-	if (que_quiere ==  quiero_ser_activa):
-		if(my_mac > mac_contrincante):
+	# ~ if (que_quiere ==  quiero_ser_activa):
+		# ~ if(my_mac > mac_contrincante):
 			
-	elif( que_quiere == soy_activa):
-		pass
-	else: # que_quiere = keep_alive:
-		pass
+	# ~ elif( que_quiere == soy_activa):
+		# ~ pass
+	# ~ else: # que_quiere = keep_alive:
+		# ~ pass
 	
 def enviarSoyActivo():
 	global ronda_champions

@@ -15,7 +15,7 @@ buzonParametros = sysvmq.Queue(15)
 buzonLlamadoGraficador = sysvmq.Queue(69)
 buzonRetornoGraficador = sysvmq.Queue(469)
 
-
+	
 def mallocMaravilloso(sensorId,tamanoCelda): #Agrego en la page table y despues habilito pagina en memoria principal 
 	global pageTable,tamanoPT					#Y despues meto el numero de pagina en la page table 
 	pageTable.append([])
@@ -88,8 +88,11 @@ def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
 		print (var[2])
 		packUtil = struct.pack('=II',var[1],((int)(var[2])) )
 		print(packUtil)
-		datos = struct.unpack('=II', packUtil)
-		print(datos)
+		#datos = struct.unpack('=II', packUtil)
+		print(packUtil[0:4])
+		a=struct.unpack("=I",packUtil[4:8])[0]
+		print(a)
+		#print(datos)
 		###DEBUG: Todo apunta que hasta aqui todo bien, y es el mismo paquete que se estaba guardando tambien.
 	elif(datoAleer == 2):
 		packUtil = struct.pack('=If',var[1],var[2])
