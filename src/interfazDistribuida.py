@@ -104,7 +104,6 @@ def agregarNodoTabla(ipNodo, espacioNodo):
 	else:	
 		print(threading.current_thread().name," Ya está en la tabla: agregarNodoTabla")
 		
-
 def elegirNodo(tamPaginaAGuardar):
 	global tablaNodos,tamanoTablaNodos
 	nodoElecto = False
@@ -215,7 +214,6 @@ def pedirPagina(numeroPagina):
 	#Se envia el paquete a ipNodo mediante protocolo correspondiente y se recibe el paquete de respuesta
 	packRecibido = sendTCPNodo(packEnvio,ipNodo) #podria recibir 0
 
-
 	return packRecibido
 
 def escucharML():
@@ -317,18 +315,25 @@ def responderComando():
 			pass
 
 def iniciarHilos():
-	#hiloPelea = threading.Thread(target=pelea,name='[Pelea]')
-	#hiloPelea.start()
-	
-	hiloNodos = threading.Thread(target=accionHiloPrincipal,name='		[Principal]')
-	hiloNodos.start()
-	
-	hiloPrincipal = threading.Thread(target=accionHiloNodos,name="[Broadcast]")
-	hiloPrincipal.start()
-	
-	hiloInput = threading.Thread(target=responderComando,name="INPUT")
+	hiloInput = threading.Thread(target=responderComando,name="INPUT") # Hilo extra para debugeo
 	hiloInput.start()
 	
+	hiloPelea = threading.Thread(target=pelea,name='[Pelea]') # encargado de 
+	hiloPelea.start()
+	while True:
+		if(soyActiva):
+			soyActiva()
+
+
+def soyActiva():
+	hiloNodos = threading.Thread(target=accionHiloPrincipal,name='[Principal]') #Encargado de comunicar Local con Nodos y viceversa
+	hiloNodos.start()
 	
+	hiloPrincipal = threading.Thread(target=accionHiloNodos,name="[Broadcast]") # Encargado de escuchar broadcasts de los nodos
+	hiloPrincipal.start()
 
 iniciarHilos()
+
+
+
+	

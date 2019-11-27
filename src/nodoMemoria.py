@@ -1,7 +1,6 @@
 import sys
 import socket
 import threading
-#from socket import *
 import time
 import struct
 #Metadatos Generales:
@@ -85,7 +84,6 @@ def agregarMetadatos(idPagina,tamPagina):
 	
 	return escribiendoDatos
 	
-	
 def agregarDatos(datos):
 	global tamanoDisponible
 	
@@ -127,8 +125,7 @@ def buscarDatos(idPagina):
 			indice += 17
 	
 	return datosCompletos
-		
-		
+			
 def broadcast():
 	global tamanoDisponible
 	global sendBcast
@@ -156,6 +153,7 @@ def recibirTCP():
 	
 	PORT = 3114        # Port to listen on (non-privileged ports are > 1023)
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+		s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 		s.bind(('', PORT))
 		s.listen()
 		while True:
@@ -210,6 +208,7 @@ def recibirTCP():
 				# ~ conn.sendall(data)
 		
 	s.close()
+
 def comLs():
 	global punteroMeta
 	
@@ -239,9 +238,7 @@ def comLs():
 		else:
 			print("El comando no existe")
 		
-def test():
-	
-	
+def init():
 	crearArchivo()
 	threadBcast = threading.Thread(target=broadcast)
 	threadBcast.start()
@@ -250,4 +247,4 @@ def test():
 	while True:
 		recibirTCP()
 
-test()
+init()
