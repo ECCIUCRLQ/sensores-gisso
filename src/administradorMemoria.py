@@ -103,13 +103,14 @@ def pasarPaginaDistribuidaALocal(indPagSwap, numP):
 	opCode = 1
 	idPagina = numP
 	#Se empaquetan y se envian los datos mediante el protocolo correspondiente.
-	formatoPedir = "BB"
+	formatoPedir = "=BB"
 	packPedir = struct.pack(formatoPedir,opCode,idPagina)
 	#s.sendall(packPedir)
 	packRecibido = sendTCP(packPedir)
 	#Se recibe el paquete de respuesta
-	#packRecibido = conn.recv(1024)
-	formatoConfirmacion = "BB"+ str(len(packRecibido)-2)+"s"
+	#formatoConfirmacion = "BB"+ str(len(packRecibido)-2)+"s"
+	formatoConfirmacion = "=BB"
+	tamanoPack = int(len(packRecibido)-2)
 	#datosPack = struct.unpack(formatoConfirmacion,packRecibido)
 	#opCodeR = datosPack[0]
 	opCodeR = packRecibido[0]
@@ -128,10 +129,11 @@ def busquedaPaginaSwap(): #Sirve para localizar el indice de la pagina en la que
 	global memoriaPrincipal, max5, max8, numeroFilasMemoria
 	pagSwapB = False
 	indMemSwap = -1
+	#Se recorre la memoria principal buscando una llena
 	i = 0
 	while(i<numeroFilasMemoria and pagSwapB == False):
 		if( paginallenaMemoriaPrincipal(i) == True ):
-			pagSwap = True
+			pagSwapB = True 
 			indMemSwap = i
 		i += 1
 
@@ -139,7 +141,6 @@ def busquedaPaginaSwap(): #Sirve para localizar el indice de la pagina en la que
 	if(pagSwapB == False):
 		#Escoje una random
 		indMemSwap = random.randint(0,numeroFilasMemoria-1)
-		print (indMemSwap)
 	return indMemSwap
 
 
@@ -200,23 +201,16 @@ def pedirPagina(numeroP):
 		#Se toma de la memoria local la pagina deseada
 		paginaADevolver = memoriaPrincipal[indMemSwap][:]
 		
-	#print("PagADevolver: ",paginaADevolver)
 	return paginaADevolver
 	
 def paginallenaMemoriaPrincipal(indiceP): #Verificar por medio de un indice si una pagina esta llena en memoria local
 	paginaLlena = False
-	#print("Ind:" + str(indiceP))
-	#print ("Tamano de celdas pagina" + str(memoriaPrincipal[indiceP][1]))
-	#print ("Tamano" + str(len(memoriaPrincipal[indiceP])))
 	if(len(memoriaPrincipal[indiceP]) != 0 and memoriaPrincipal[indiceP][1] == 5):
-		#print("Entre al if que es")
 		if(len(memoriaPrincipal[indiceP]) == max5):
-			#print("Entre a if que dice que si esta llena")
 			paginaLlena = True
 	elif(len(memoriaPrincipal[indiceP]) != 0 and memoriaPrincipal[indiceP][1] == 8):
 		if(len(memoriaPrincipal[indiceP]) == max8):
 			paginaLlena = True
-	#print("Retorna pagina llena con" + str(paginaLlena))
 	return paginaLlena
 	
 def guardar(pack,numP): #Guarda en memoria. Puede tener varias condiciones que la pagina(que le da la intefaz local) este en memoria principal pero no este llena entonces solo guarda
@@ -246,7 +240,7 @@ def guardar(pack,numP): #Guarda en memoria. Puede tener varias condiciones que l
 			#Se guarda
 			memoriaPrincipal[indiceP].append(pack)
 			numeroPag = pagNueva
-	#Si no esta en memoria local
+	#Si no esta en memoria local 
 	else:
 		#print("Entre al else")
 		indMemSwap = busquedaPaginaSwap()
@@ -258,7 +252,7 @@ def guardar(pack,numP): #Guarda en memoria. Puede tener varias condiciones que l
 		recibido = False
 		while (recibido == False):
 			recibido = pasarPaginaDistribuidaALocal(indMemSwap,numP)
-		paginaLlena = paginallenaMemoriaPrincipal(indMemSwap)
+		paginaLlena = paginallenaMemoriaPrincipal(indMemSwap) #(Revisar)
 		#Si tiene espacio 
 		if(paginaLlena == False):
 			#Se guarda
@@ -273,7 +267,6 @@ def guardar(pack,numP): #Guarda en memoria. Puede tener varias condiciones que l
 	return numeroPag
 	
 while(True):
-	#print ("Hola")
 	codigoLlamado = buzonLlamados.get()
 	#print(codigoLlamado)
 	if(codigoLlamado == 0): #Llama a Habilitar pagina

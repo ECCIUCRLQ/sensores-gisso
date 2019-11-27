@@ -20,10 +20,10 @@ def mallocMaravilloso(sensorId,tamanoCelda): #Agrego en la page table y despues 
 	global pageTable,tamanoPT					#Y despues meto el numero de pagina en la page table 
 	pageTable.append([])
 	pageTable[tamanoPT].append(sensorId)
-	buzonLlamados.put(0) #Para llamar a habilitarPagina
-	#print("TamanoPagina",tamanoPagina)
+	buzonLlamados.put(0) #Para llamar a habilitarPagina()
 	buzonParametros.put(tamanoCelda)
 	nuevaPag = buzonRetornos.get() 
+	#Agrego la nueva pagina a la page table
 	pageTable[tamanoPT].append(nuevaPag)
 	#print( "PageTable Malloc: " + str(pageTable[tamanoPT]))
 	tamanoPT += 1
@@ -80,14 +80,17 @@ def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
 	#print("Arreglo de Paquete desempaquetado",var)
 	datoAleer = var[3]
 	packUtil = 0
-	#packUtil=[var[1],var[2]]
-	#print(var)
 	if(datoAleer == 0):
 		packUtil = struct.pack('=IB',var[1],var[2])
 	elif(datoAleer == 1):
-		#print (var[1])
-		#print (var[2])
+		###DEBUG: Si esta entrando aqui
+		print (var[1]) #Imprime bien estos datos
+		print (var[2])
 		packUtil = struct.pack('=II',var[1],((int)(var[2])) )
+		print(packUtil)
+		datos = struct.unpack('=II', packUtil)
+		print(datos)
+		###DEBUG: Todo apunta que hasta aqui todo bien, y es el mismo paquete que se estaba guardando tambien.
 	elif(datoAleer == 2):
 		packUtil = struct.pack('=If',var[1],var[2])
 		
@@ -133,7 +136,8 @@ while(True):
 	except:
 		pass	
 	if 	(packRecolector != -1): # Si pack recolector es distinto de -1 lo guarda
-		#print (packRecolector)
+		#Esta llegando el mismo paquete (de prueba.py)
+		print (packRecolector)
 		guardar(packRecolector)
 	sID = -1
 	try:
