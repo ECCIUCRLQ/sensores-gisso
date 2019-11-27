@@ -11,24 +11,24 @@ def envioPackBC ():
 	PORT_BC = 5000
 	socketNodos = socket.socket(socket.AF_INET,socket.SOCK_DGRAM) # Abrir los sockets
 	#Crear paquete BC
-	packRpta = struct.pack('BI', 5, 800000)
+	packRpta = struct.pack('BI', 5, 80000000)
 	socketNodos.sendto(packRpta, (IP_ID, PORT_BC)) # Crea la conexion
 
 #Prueba
 envioPackBC()
 
 socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-socket_send.bind(('0.0.0.0', PUERTO_ID))
+socket_send.bind((IP_Nodo, PUERTO_ID))
 socket_send.listen()
 conn, addr = socket_send.accept()
 with conn:
-	print('Connected by', addr)
-	while True:
-		data = conn.recv(4096)
-		if not data:
-			break
-		pack = struct.pack('BBI', 2, data[1], 800000)
-		conn.sendall(pack)
+    print('Connected by', addr)
+    while True:
+        data = conn.recv(4096)
+        if not data:
+            break
+        pack = struct.pack('BBI', 2, data[1], 80000000)
+        conn.sendall(pack)
 
 
 while(True):

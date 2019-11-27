@@ -6,9 +6,8 @@ from ipcqueue import sysvmq
 import pdb
 import socket
 #IPDistribuida = 192.168.1.100
-HOST = '10.1.138.63'  # Standard loopback interface address (localhost)
 PORT = 2000           # Port to listen on (non-privileged ports are > 1023)
-IPDistribuida = '10.1.137.22'
+IPDistribuida = '10.1.138.93'
 numeroPagina = 0
 memoriaPrincipal = [] #Memoria principal o local
 numeroFilasMemoria = 4
@@ -20,10 +19,10 @@ buzonRetornos = sysvmq.Queue(16)
 buzonParametros = sysvmq.Queue(15)
 
 #Se crea socket para comunicacion con la memoria local
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-print("Se creo el socket")
-s.connect((IPDistribuida, PORT))
-print("Se hizo el connect")
+#s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#print("Se creo el socket")
+#s.connect((IPDistribuida, PORT))
+#print("Se hizo el connect")
 
 #Codigos de llamados
 #HabilitarPagina = 0
@@ -33,6 +32,25 @@ print("Se hizo el connect")
 for i in range(numeroFilasMemoria):
     memoriaPrincipal.append([])
 
+#Metodo para la comunicacion entre Memoria distribuida y los nodos de memoria (TCP)
+def sendTCP(paquete):
+	global PORT
+	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_send:
+		packRetorno = 0
+		while True:
+			try:
+				socket_send.connect((IPDistribuida, PORT))
+				socket_send.sendall(paquete)
+				data = socket_send.recvfrom(4096)
+				if(data != 0):
+					packRetorno = data
+					socket_send.close()
+					break
+				
+			except:
+				pass	
+	return packRetorno
+
 def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a hacer swap y pasa una página (arreglo) a memoria distribuida por medio de un paquete mediante un socket.
 	global memoriaPrincipal, s
 	
@@ -41,30 +59,35 @@ def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a 
 	#Para el paquete de mandar a guardar en M.Distribuida se ocupan los siguientes datos:
 	opCode = 0
 	idPagina = memoriaPrincipal[indPagSwap][0]
-	print ("idpag",idPagina)
+	#print ("idpag",idPagina)
 	tamPag = 0 #Tamano de la pagina a la que se le esta haciendo swap en ese momento.
 	if( memoriaPrincipal[indPagSwap][1] == 5 ):
 		tamPag = len(memoriaPrincipal[indPagSwap]) * 5 #Para tener el tamano en bytes 
 	elif( memoriaPrincipal[indPagSwap][1] == 8 ):
 		tamPag = len(memoriaPrincipal[indPagSwap]) * 8 #Tamano en bytes
 	datosPag = memoriaPrincipal[indPagSwap][:]
-	print ("Datos", memoriaPrincipal[indPagSwap][:][2])
-	#print ("datos1:",memoriaPrincipal[indPagSwap][:])
+	print("Datos Pagina:")
+	print (datosPag)
 	#print("Datospag array")
 	#print(datosPag)
-	formatoGuardar = "BBI" + str(len(datosPag)) +"s"
+	tamPag = int(len(datosPag))
+	formatoGuardar = "=BBI"
 	#Se empaquetan
-	packGuardar = struct.pack(formatoGuardar,opCode,idPagina,tamPag,memoriaPrincipal[indPagSwap][:][2])
+	packGuardar = struct.pack(formatoGuardar,opCode,idPagina,tamPag)
+	packGuardar += bytearray(datosPag)
 	#Se envian esos datos mediante el protocolo TCP
-	s.sendall(packGuardar)
+	#s.sendall(packGuardar)
 	
+	packRecibido = sendTCP(packGuardar)
+
 	#Para borrar la pagina de memoria local
 	del memoriaPrincipal[indPagSwap][:]
 	
 	#Se recibe una confirmacion con: 
-	packRecibido = s.recv(1024)
-	datosPack = struct.unpack('BB',packRecibido)
-	opCode = datosPack[0]
+	#packRecibido = s.recv(1024)
+	#datosPack = struct.unpack('BB',packRecibido)
+	#opCode = datosPack[0]
+	opCode = packRecibido[0]
 	#Si no hubo error
 	if(opCode == 2):
 		guardado = True
@@ -82,12 +105,14 @@ def pasarPaginaDistribuidaALocal(indPagSwap, numP):
 	#Se empaquetan y se envian los datos mediante el protocolo correspondiente.
 	formatoPedir = "BB"
 	packPedir = struct.pack(formatoPedir,opCode,idPagina)
-	s.sendall(packPedir)
+	#s.sendall(packPedir)
+	packRecibido = sendTCP(packPedir)
 	#Se recibe el paquete de respuesta
-	packRecibido = conn.recv(1024)
+	#packRecibido = conn.recv(1024)
 	formatoConfirmacion = "BB"+ str(len(packRecibido)-2)+"s"
-	datosPack = struct.unpack(formatoConfirmacion,packRecibido)
-	opCodeR = datosPack[0]
+	#datosPack = struct.unpack(formatoConfirmacion,packRecibido)
+	#opCodeR = datosPack[0]
+	opCodeR = packRecibido[0]
 	#En caso de que no haya error:
 	#Se recibe la pagina solicitada	
 	datosPagina = packRecibido[2:len(packRecibido)]
@@ -105,7 +130,7 @@ def busquedaPaginaSwap(): #Sirve para localizar el indice de la pagina en la que
 	indMemSwap = -1
 	i = 0
 	while(i<numeroFilasMemoria and pagSwapB == False):
-		if( paginallenaMemoriaPrincipal(i) ):
+		if( paginallenaMemoriaPrincipal(i) == True ):
 			pagSwap = True
 			indMemSwap = i
 		i += 1
@@ -114,6 +139,7 @@ def busquedaPaginaSwap(): #Sirve para localizar el indice de la pagina en la que
 	if(pagSwapB == False):
 		#Escoje una random
 		indMemSwap = random.randint(0,numeroFilasMemoria-1)
+		print (indMemSwap)
 	return indMemSwap
 
 
@@ -143,11 +169,9 @@ def habilitarPagina(tamanoCelda):
 	#Cuando esta llena, entonces se empieza a hacer swap.
 	else:
 		indMemSwap = busquedaPaginaSwap()
-		print ("IndmemSwap",indMemSwap)
 		guardado = False
 		while (guardado == False):
 			guardado = pasarPaginaLocalADistribuida(indMemSwap)
-			print ("Holis")
 		#Agregar nueva pagina en memoria local
 		memoriaPrincipal[indMemSwap].append(numeroPagina)
 		numeroPagina += 1
@@ -184,12 +208,12 @@ def paginallenaMemoriaPrincipal(indiceP): #Verificar por medio de un indice si u
 	#print("Ind:" + str(indiceP))
 	#print ("Tamano de celdas pagina" + str(memoriaPrincipal[indiceP][1]))
 	#print ("Tamano" + str(len(memoriaPrincipal[indiceP])))
-	if(memoriaPrincipal[indiceP][1] == 5):
+	if(len(memoriaPrincipal[indiceP]) != 0 and memoriaPrincipal[indiceP][1] == 5):
 		#print("Entre al if que es")
 		if(len(memoriaPrincipal[indiceP]) == max5):
 			#print("Entre a if que dice que si esta llena")
 			paginaLlena = True
-	elif(memoriaPrincipal[indiceP][1] == 8):
+	elif(len(memoriaPrincipal[indiceP]) != 0 and memoriaPrincipal[indiceP][1] == 8):
 		if(len(memoriaPrincipal[indiceP]) == max8):
 			paginaLlena = True
 	#print("Retorna pagina llena con" + str(paginaLlena))
@@ -198,6 +222,7 @@ def paginallenaMemoriaPrincipal(indiceP): #Verificar por medio de un indice si u
 def guardar(pack,numP): #Guarda en memoria. Puede tener varias condiciones que la pagina(que le da la intefaz local) este en memoria principal pero no este llena entonces solo guarda
 						#Que este en memoria principal pero la pagina esta llena y que la pagina no este en memoria principal
 	global numeroFilas, memoriaPrincipal,max5,max8
+	print("NumeroPagina pos 0 memoria " + str (memoriaPrincipal[0][0]))
 	numeroPag = -1 #Se retorna a la interfaz, para saber si se le habilito una nueva pagina a ese sensor o no(-1).
 	indiceP = busquedaPaginaMemoriaPrincipal(numP)
 	#print(indiceP)
@@ -229,7 +254,6 @@ def guardar(pack,numP): #Guarda en memoria. Puede tener varias condiciones que l
 		#print("Indice swap:" + str(indMemSwap))
 		guardado = False
 		while (guardado == False):
-			
 			guardado = pasarPaginaLocalADistribuida(indMemSwap)
 		recibido = False
 		while (recibido == False):

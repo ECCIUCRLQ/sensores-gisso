@@ -6,7 +6,7 @@ from ipcqueue import sysvmq
 import threading
 pageTable = []
 tamanoPT = 0 #Tamano page table
-FORMAT = 'IIfB' # IdentificadorSensor,fecha, dato,bit para verificar dato. 
+FORMAT = '=IIfB' # IdentificadorSensor,fecha, dato,bit para verificar dato. 
 
 buzonGeneral = sysvmq.Queue(420)#Buzon para procesos recolectores
 buzonLlamados = sysvmq.Queue(17)#Buzon para solicitar al administrador meter datos.
@@ -25,6 +25,7 @@ def mallocMaravilloso(sensorId,tamanoCelda): #Agrego en la page table y despues 
 	buzonParametros.put(tamanoCelda)
 	nuevaPag = buzonRetornos.get() 
 	pageTable[tamanoPT].append(nuevaPag)
+	#print( "PageTable Malloc: " + str(pageTable[tamanoPT]))
 	tamanoPT += 1
 	#print("Malloc")
 	#print("PageTable:",pageTable)
@@ -82,13 +83,13 @@ def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
 	#packUtil=[var[1],var[2]]
 	#print(var)
 	if(datoAleer == 0):
-		packUtil = struct.pack('IB',var[1],var[2])
+		packUtil = struct.pack('=IB',var[1],var[2])
 	elif(datoAleer == 1):
 		#print (var[1])
 		#print (var[2])
-		packUtil = struct.pack('II',var[1],((int)(var[2])) )
+		packUtil = struct.pack('=II',var[1],((int)(var[2])) )
 	elif(datoAleer == 2):
-		packUtil = struct.pack('If',var[1],var[2])
+		packUtil = struct.pack('=If',var[1],var[2])
 		
 	#print("Contenido packUtil",packUtil)
 	return packUtil
@@ -109,7 +110,6 @@ def guardar(pack):#Busca el sensor ID, sino esta entonces lo agrega a la page ta
 	ind = buscarSensorId(getSensorId(pack))
 	if(ind == -1):
 		tamCelda = getTamanoCelda(pack)
-		print("Llama a mallocMaravilloso")
 		mallocMaravilloso(getSensorId(pack),tamCelda)
 	packDatos = datoUtil(pack)
 	buzonLlamados.put(2) #Para llamar a guardar()
