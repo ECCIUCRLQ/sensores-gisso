@@ -142,7 +142,7 @@ def broadcast():
 	paqueteBcast = struct.pack('=BI',5,tamanoDisponible)
 	try:
 		while sendBcast == 0:
-			sent = sock.sendto(paqueteBcast, server_address)
+			sock.sendto(paqueteBcast, server_address)
 			print('Soy nodo deme pelota')
 			
 			time.sleep(1)	
@@ -154,7 +154,6 @@ def recibirTCP():
 	global sendBcast
 	global tamanoDisponible
 	
-	FormatoTCP = "=BBI"
 	PORT = 3114        # Port to listen on (non-privileged ports are > 1023)
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 		s.bind(('', PORT))
@@ -210,7 +209,7 @@ def recibirTCP():
 				
 				# ~ conn.sendall(data)
 		
-	socket.close()
+	s.close()
 def comLs():
 	global punteroMeta
 	
@@ -228,8 +227,6 @@ def comLs():
 				identificador = int.from_bytes(archivo.read(1), byteorder = 'big')
 				archivo.seek(indice+1)
 				tam = int.from_bytes(archivo.read(4), byteorder = 'big')
-				archivo.seek(indice+5)
-				inicioDatos = int.from_bytes(archivo.read(4), byteorder = 'big')
 				archivo.seek(indice+9)
 				fechaCrea = int.from_bytes(archivo.read(4), byteorder = 'big')
 				fechaCrea = time.ctime(fechaCrea)

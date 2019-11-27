@@ -5,6 +5,7 @@ import threading
 import signal
 import time
 import sys
+import uuid 
 
 # Variables Globales
 tablaNodos = [] 			# Columnas: NumeroNodo | IP | EspacioDisponible
@@ -22,7 +23,7 @@ IP_ML = ''
 PORT_NM_ID = 6000
 PORT_ID_ML = 2000
 PORT_ID_NM = 3114
-BUFFER_SIZE = 691210
+BUFFER_SIZE = 692000
 
 # Formatos
 formatoBcast = '=BI'
@@ -34,7 +35,7 @@ def keyboardInterruptHandler(signal, frame):
 	exit(0)
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
-def sendTCP_ML(idPagina):
+def paqueteTCP_ML(idPagina):
 	formatoRespuestaA = "=BB"
 	paquete_respuesta = struct.pack(formatoRespuestaA,2,idPagina)
 	
@@ -141,7 +142,7 @@ def actualizarDatos(indiceNodo, id_pagina, espacioDisponibleRecibido, numeroNodo
 	print(threading.current_thread().name," Tabla Paginas: ",tablaPaginas)
 	
 def mandarAGuardar(numeroNodo, packAGuardar):
-	global PORT_ID_NM, socketMLocal, socketNodos, tablaNodos
+	global PORT_ID_NM, tablaNodos
 	
 	id_pagina=0
 	indiceNodo = 0
@@ -199,7 +200,7 @@ def buscaPagina(numeroPagina):
 
 #Se va a ver si se pasa tambien pack armado por parametro o se vuelve a armar dentro de metodo como se esta haciendo.
 def pedirPagina(numeroPagina):
-	global PORT_ID_NM, socketMLocal, socketNodos,tablaNodos,tablaNodos
+	global PORT_ID_NM, tablaNodos,tablaNodos
 	#Se busca en la tabla de paginas la pagina solicitada
 	indicePagina = buscaPagina(numeroPagina)
 	nodo = tablaPaginas[indicePagina][1]
@@ -214,13 +215,14 @@ def pedirPagina(numeroPagina):
 	#Se envia el paquete a ipNodo mediante protocolo correspondiente y se recibe el paquete de respuesta
 	packRecibido = sendTCPNodo(packEnvio,ipNodo) #podria recibir 0
 
-	#Se envia por paquete el paquete recibido al administrador de memoria. (Sin importar su opCode)
-	socketMLocal.sendall(packRecibido)
+
+	return packRecibido
 
 def escucharML():
 	global HOST,PORT_ID_ML,IP_ML
 	
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socketMLocal:
+			socketMLocal.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 			socketMLocal.bind(('', PORT_ID_ML))
 			socketMLocal.listen()
 			while True:
@@ -230,15 +232,16 @@ def escucharML():
 						packRec = conn.recv(BUFFER_SIZE) #Solo para que exista pero es el paquete recibido
 						opCode = packRec[0]
 						IP_ML = addr[0]
-						if(opCode == 0):
+						if(opCode == 0): # Si se gurdó correctamente
 							id_pagina = guardar(packRec)
-							paquete = sendTCP_ML(id_pagina)
+							paquete = paqueteTCP_ML(id_pagina)
 							print(threading.current_thread().name," Paquete a ML: ",paquete)
-							socket_send.sendall(paquete)
+							conn.sendall(paquete)
 							
-						elif(opCode == 1):
+						elif(opCode == 1): # Retorna si pedio
 							idPagina = packRec[1]
 							pedirPagina(idPagina)
+							conn.sendall(paquete)
 						socketMLocal.close()
 						break
 
@@ -281,7 +284,6 @@ def accionHiloNodos():
 			time.sleep(2)
 			pass
 	sock.close()
-#Se crea el hilo que atiende a los nodos (Cuando quieren ser nodos)
 
 def printNodos(tablaNodos, tamanoTablaNodos):
 	index = 0
@@ -290,8 +292,7 @@ def printNodos(tablaNodos, tamanoTablaNodos):
 		print(tablaNodos[index])
 		index+=1
 	print("==============\n")
-	
-	
+		
 def printPaginas(tablaPaginas, tamanoTablaPaginas):	
 	index = 0
 	print("\n============INPUT============")
@@ -299,6 +300,9 @@ def printPaginas(tablaPaginas, tamanoTablaPaginas):
 		print(tablaPaginas[index])
 		index+=1
 	print("==============\n")	
+
+def getMAC():
+	return uuid.getnode() 	
 
 def responderComando():
 	global tablaNodos, tablaPaginas, tamanoTablaPaginas, tamanoTablaNodos
@@ -313,7 +317,7 @@ def responderComando():
 			pass
 
 def iniciarHilos():
-	hiloPelea = threading.Thread(target=pelea,name='[Pelea]')
+	#hiloPelea = threading.Thread(target=pelea,name='[Pelea]')
 	#hiloPelea.start()
 	
 	hiloNodos = threading.Thread(target=accionHiloPrincipal,name='		[Principal]')
