@@ -145,16 +145,16 @@ def enviarQuieroSer():
 	
 	#sock_quiero.settimeout(3) # timeout un thread que lo mate, este timeout es cuando tiempo esta escuchando
 
-
+	quiero_ser_activa = 0
 	my_mac = getMAC()
 	server_address = ('255.255.255.255', PUERTO_CHAMPIONS)
 
 	paquete_bcast = struct.pack('=BIB',quiero_ser_activa, my_mac,ronda_champions)
 	try:
 		print('Enviar quiero ser Activa')
-		sent = sock.sendto(paquete_bcast, server_address)
+		sent = sock_quiero.sendto(paquete_bcast, server_address)
 		data, address = sock_quiero.recvfrom(BUFFER_SIZE)
-		data_bcast = sock.unpack(formato_champions, data)
+		data_bcast = struct.unpack(formato_champions, data)
 		que_quiere = data_bcast[0] 
 		mac_contrincante = data_bcast[1] 
 		
@@ -162,7 +162,7 @@ def enviarQuieroSer():
 			peleitas(que_quiere, mac_contrincante, my_mac)
 				
 	finally:	
-		sock.close()
+		sock_quiero.close()
 		print("Termino Bcast")
 	return 0
 
@@ -173,7 +173,7 @@ def peleitas(que_quiere, mac_contrincante, my_mac):
 	
 	if (que_quiere ==  quiero_ser_activa):
 		if(my_mac > mac_contrincante):
-			
+			pass
 	elif( que_quiere == soy_activa):
 		pass
 	else: # que_quiere = keep_alive:
@@ -197,6 +197,7 @@ def main():
 	#thread_bcast.start()
 	registerNodeBC()
 	thread_champions = threading.Thread(target = enviarQuieroSer)
+	print ("MAC", getMAC())
 """
 	paquete = crearPaquete(1)
 	paquete1 = crearPaquete(2)
@@ -215,7 +216,7 @@ def main():
 	pedirTCP(paquetePedir, IP_Nodo)
 """
 
-	print ("MAC", getMAC())
+	
 	
 main()
 

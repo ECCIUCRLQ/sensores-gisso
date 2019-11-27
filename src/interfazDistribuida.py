@@ -14,8 +14,14 @@ tablaPaginas = [] 			# Columnas: NumeroPagina | NumeroNodo
 tamanoTablaPaginas = 0 		# Tamano de la tabla de paginas
 numeroNodo = 0 				# Identificador unico para cada nodo
 killHilos = False
+quieren_pelea = -1
+mi_mac = -1
+ronda_champions = 0
+soy_activa = False
+hay_activa = False
 
 # IPs
+RED_LAB = '10.1.255.255'
 IPActiva = '127.0.0.1'
 HOST = '10.1.138.93'  # Standard loopback interface address (localhost)
 IP_ML = ''
@@ -23,6 +29,7 @@ IP_ML = ''
 PORT_NM_ID = 6000
 PORT_ID_ML = 2000
 PORT_ID_NM = 3114
+PORT_ID_ID = 6666
 BUFFER_SIZE = 692000
 
 # Formatos
@@ -33,7 +40,7 @@ def keyboardInterruptHandler(signal, frame):
 	global killHilos
 	killHilos = True
 	exit(0)
-signal.signal(signal.SIGINT, keyboardInterruptHandler)
+	signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
 def paqueteTCP_ML(idPagina):
 	formatoRespuestaA = "=BB"
@@ -246,11 +253,62 @@ def escucharML():
 				except:
 					pass
 
-def pelea():
+	
+	# OpCodes Champions:
+	#		0 -> Quiero ser
+	#		1 -> Soy activa
+	#		2 -> KeepAlive
+	
+def perdi_pelea():
+
 	while True:
-		print(threading.current_thread().name, "Waiting for Peleitas")
-		time.sleep(2)
 		pass
+		# me quedo escuchando broadcast
+		# break cuando muere keepalive
+	
+def recibir_dump(tabla):
+	pass
+
+def recibir_parte(data):
+	pass
+
+def champions():
+	global quieren_pelea, mi_mac, ronda_champions, soy_activa, hay_activa
+	mi_mac = getMAC().to_bytes(6,'little')
+
+	socket_champions = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	socket_champions.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+	server_address = (RED_LAB, PORT_ID_ID)
+	formatoBcast = '=B6sB'
+	socket_champions.bind(server_address)
+	while True:
+		if not(hay_activa):
+			paquete_bcast = struct.pack(formatoBcast,0, mi_mac,ronda_champions)
+			socket_champions.sendto(paquete_bcast, server_address)
+			data, address = socket_champions.recvfrom(BUFFER_SIZE)
+
+			if(data != 0):
+				data = struct.unpack(formatoBcast, data)
+				
+				if(data[0] == 1):
+					hay_activa = True
+					recibir_dump(data)
+
+				elif(data[0] == 0): # OpCode es yo quiero
+					if(data[2] == ronda_champions): # Comparo ronda
+						if( mi_mac > data[1]):
+							ronda_champions+=1
+						else:	
+							soy_activa = False
+		else:
+			if not(soy_activa):
+				data, address = socket_champions.recvfrom(BUFFER_SIZE)
+				if(data[0] == 2):
+					pass
+
+
+	socket_champions.close()
 
 def accionHiloPrincipal():
 	while(True):
@@ -274,9 +332,9 @@ def accionHiloNodos():
 				if data[0] == 5: #aqui hay que chequear que el opcode del paquete haya sido el esperado, si no reenviar
 					print (threading.current_thread().name," Respondiendo por TCP....")
 					agregarNodoTabla(IP_Nodo,espacioDisponible)
-					#Creo paquete de respuesta
-					packRpta = struct.pack('=B', 2)
-					sendRptaBC(packRpta, IP_Nodo)
+
+					paquete_respuesta = struct.pack('=B', 2)
+					sendRptaBC(paquete_respuesta, IP_Nodo)
 		except:
 			print (threading.current_thread().name," Escuchando registros de nodos")
 			time.sleep(2)
@@ -314,23 +372,24 @@ def responderComando():
 		else:
 			pass
 
-def iniciarHilos():
-	hiloInput = threading.Thread(target=responderComando,name="INPUT") # Hilo extra para debugeo
-	hiloInput.start()
-	
-	hiloPelea = threading.Thread(target=pelea,name='[Pelea]') # encargado de 
-	hiloPelea.start()
-	while True:
-		if(soyActiva):
-			soyActiva()
-
-
 def soyActiva():
 	hiloNodos = threading.Thread(target=accionHiloPrincipal,name='[Principal]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloNodos.start()
 	
 	hiloPrincipal = threading.Thread(target=accionHiloNodos,name="[Broadcast]") # Encargado de escuchar broadcasts de los nodos
 	hiloPrincipal.start()
+
+def iniciarHilos():
+	global soyActiva
+
+	hiloInput = threading.Thread(target=responderComando,name="INPUT") # Hilo extra para debugeo
+	hiloInput.start()
+	
+	hiloPelea = threading.Thread(target=champions,name='[Champions]') # encargado de 
+	hiloPelea.start()
+	while True:
+		if(soyActiva):
+			soyActiva()
 
 iniciarHilos()
 
