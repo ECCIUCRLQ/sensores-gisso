@@ -9,27 +9,33 @@ import threading
   
 
 MY_IP = '10.1.138.103'  # Mi IP
-IP_Nodo = 0
 
+# Formatos
 formatoBcast = '=BI'
+formato_champions = '=BIB'
+# Puertos
 PUERTO_BC = 6000
 PUERTO_CHAMPIONS = 6666
 PORT_NM = 3114
 BUFFER_SIZE = 691210
-
-formato_champions = '=BIB'
+# Var globales
 ronda_champions = 0
 soy_activa = False 
 my_mac = 0
-
+IP_Nodo = 0
+# Nodos
+tabla_nodos_espacio = []
+tabla_nodos_paginas = []
+pos_tabla_nodos = 0
+nodo_id = 0
 
 def crearPaquete(ID):
 	datos = bytearray([0,2,3,4,5])
 	formatoGuardar = "=BBI"
 	tamPag = int(len(datos))
 	packGuardar = struct.pack(formatoGuardar,0,ID,tamPag)
-	packGuardar += datos + datos
-	print("Paaaaaaaaa: ",packGuardar)
+	packGuardar += datos
+	
 	return packGuardar
 
 def crearPaquetePedir():
@@ -80,8 +86,24 @@ def pedirTCP(paquete, IP_Nodo):
 def getMAC():
 	return uuid.getnode() 	
 
+
+def add_tabla_nodo(IP_Nodo, espacio_disponible):
+	global nodo_id,tabla_nodos, pos_tabla_nodos
+	
+	tabla_nodos.append([])
+	
+	tabla_nodos_espacio[pos_tabla_nodos].append(nodo_id)
+	tabla_nodos_espacio[pos_tabla_nodos].append(IP_Nodo)
+	tabla_nodos_espacio[pos_tabla_nodos].append(espacio_disponible)
+	
+	print("Entre a agregarNodoTabla",nodo_id, IP_Nodo, espacio_disponible)
+	pos_tabla_nodos += 1
+	nodo_id += 1
+
+def send_tabla_dump(tabla_nodos):
+	pass # Aqui se envia por broadcast toda la tabla de nodos
+	
 def registerNodeBC():
-	global IP_Nodo
 	sock_broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock_broadcast.setblocking(0)
 	server_address = ('', PUERTO_BC)
@@ -93,10 +115,14 @@ def registerNodeBC():
 			if(data != 0):
 				data = struct.unpack(formatoBcast, data)
 				
+				op_code = data[0]
+				espacio_disponible = data[1]
 				IP_Nodo = address[0]	
+								
 				print('Soy ID le di pelota')
 				
-				if data[0] == 5: #aqui hay que chequear que el opcode del paquete haya sido el esperado, si no reenviar
+				if op_code == 5: #aqui hay que chequear que el opcode del paquete haya sido el esperado, si no reenviar
+					add_tabla_nodo(IP_Nodo,espacio_disponible)
 					print ("Respondiendo por TCP....")
 					respuestaTCP(IP_Nodo)
 					break			
@@ -110,13 +136,14 @@ def registerNodeBC():
 	#		0 -> Quiero ser
 	#		1 -> Soy activa
 	#		2 -> KeepAlive
+	
 def enviarQuieroSer():
 	global ronda_champions, soy_activa, my_mac
 	sock_quiero = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock_quiero.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	sock_quiero.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	
-	sock_quiero.settimeout(3) # timeout un thread que lo mate, este timeout es cuando tiempo esta escuchando
+	#sock_quiero.settimeout(3) # timeout un thread que lo mate, este timeout es cuando tiempo esta escuchando
 
 
 	my_mac = getMAC()
@@ -139,18 +166,18 @@ def enviarQuieroSer():
 		print("Termino Bcast")
 	return 0
 
-# ~ def peleitas(que_quiere, mac_contrincante, my_mac):
-	# ~ quiero_ser_activa = 0
-	# ~ soy_activa = 1
-	# ~ keep_alive = 2
+def peleitas(que_quiere, mac_contrincante, my_mac):
+	quiero_ser_activa = 0
+	soy_activa = 1
+	keep_alive = 2
 	
-	# ~ if (que_quiere ==  quiero_ser_activa):
-		# ~ if(my_mac > mac_contrincante):
+	if (que_quiere ==  quiero_ser_activa):
+		if(my_mac > mac_contrincante):
 			
-	# ~ elif( que_quiere == soy_activa):
-		# ~ pass
-	# ~ else: # que_quiere = keep_alive:
-		# ~ pass
+	elif( que_quiere == soy_activa):
+		pass
+	else: # que_quiere = keep_alive:
+		pass
 	
 def enviarSoyActivo():
 	global ronda_champions
@@ -170,7 +197,7 @@ def main():
 	#thread_bcast.start()
 	registerNodeBC()
 	thread_champions = threading.Thread(target = enviarQuieroSer)
-	
+"""
 	paquete = crearPaquete(1)
 	paquete1 = crearPaquete(2)
 	paquete2 = crearPaquete(3)
@@ -186,7 +213,7 @@ def main():
 	
 	paquetePedir = crearPaquetePedir()
 	pedirTCP(paquetePedir, IP_Nodo)
-
+"""
 
 	print ("MAC", getMAC())
 	

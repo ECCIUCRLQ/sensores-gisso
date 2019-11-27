@@ -4,26 +4,28 @@ import socket
 import threading
 import signal
 import time
+import sys
 
-tablaNodos = [] # Columnas: NumeroNodo | IP | EspacioDisponible
-tamanoTablaNodos = 0 # Tamano de la tabla de nodos
-tablaPaginas = [] # Columnas: NumeroPagina | NumeroNodo
-tamanoTablaPaginas = 0 # Tamano de la tabla de paginas
-numeroNodo = 0 # Identificador unico para cada nodo
-formatoBcast = '=BI'
-#Se crea socket para la comunicacion entre Memoria local e Interfaz distribuida (TCP)
-HOST = '10.1.138.93'  # Standard loopback interface address (localhost)
-PORT = 2000        # Port to listen on (non-privileged ports are > 1023)
-puertoNodos = 3114
-
-#Se crea socket para la comunicacion entre Memoria distribuida y nodo memoria mediante broadcast (UDP)
-IPActiva = '127.0.0.1'
-PORT_BC_NM = 6000
-#socketNodos = socket.socket(socket.AF_INET,socket.SOCK_DGRAM) # Abrir los sockets
-#socketNodos.bind((IPActiva, PORT_BC_NM))	# Crea la conexion
-
-#Bool para poder matar a los hilos secundarios
+# Variables Globales
+tablaNodos = [] 			# Columnas: NumeroNodo | IP | EspacioDisponible
+tamanoTablaNodos = 0 		# Tamano de la tabla de nodos
+tablaPaginas = [] 			# Columnas: NumeroPagina | NumeroNodo
+tamanoTablaPaginas = 0 		# Tamano de la tabla de paginas
+numeroNodo = 0 				# Identificador unico para cada nodo
 killHilos = False
+
+# IPs
+IPActiva = '127.0.0.1'
+HOST = '10.1.138.93'  # Standard loopback interface address (localhost)
+IP_ML = ''
+# Cromas
+PORT_NM_ID = 6000
+PORT_ID_ML = 2000
+PORT_ID_NM = 3114
+BUFFER_SIZE = 691210
+
+# Formatos
+formatoBcast = '=BI'
 
 #Metodo para interrupcion
 def keyboardInterruptHandler(signal, frame):
@@ -32,55 +34,75 @@ def keyboardInterruptHandler(signal, frame):
 	exit(0)
 signal.signal(signal.SIGINT, keyboardInterruptHandler)
 
+def sendTCP_ML(idPagina):
+	formatoRespuestaA = "=BB"
+	paquete_respuesta = struct.pack(formatoRespuestaA,2,idPagina)
+	
+	return paquete_respuesta	
+
 #Metodo para la comunicacion entre Memoria distribuida y los nodos de memoria (TCP)
 def sendTCPNodo(paquete, IP_Nodo):
-	global puertoNodos
+	global PORT_ID_NM
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_send:
 		packRetorno = 0
 		while True:
 			try:
-				socket_send.connect((IP_Nodo, puertoNodos))
+				socket_send.connect((IP_Nodo, PORT_ID_NM))
 				socket_send.sendall(paquete)
-				data = socket_send.recvfrom(4096)
+				data,address = socket_send.recvfrom(BUFFER_SIZE)
 				if(data != 0):
 					packRetorno = data
 					socket_send.close()
 					break
 
 			except:
-				pass
+				print(threading.current_thread().name," Error al enviar: sendTCPNodo")
+				pass		
 	return packRetorno
 
 #Metodo para la respuesta
 def sendRptaBC(paquete, IP_Nodo):
-	global puertoNodos
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socket_send:
 		packRetorno = 0
 		while True:
 			try:
-				socket_send.connect((IP_Nodo, puertoNodos))
-				print("Me conecte HP")
+				socket_send.connect((IP_Nodo, PORT_ID_NM))
 				socket_send.sendall(paquete)
-				print("Le mande la puya")
 				socket_send.close()
 				break
-
 			except:
+				print(threading.current_thread().name," Error respondiendo: sendRptaBC")
 				pass
 	return packRetorno
 
+def buscarIP(ipNodo):
+	global tablaNodos,tamanoTablaNodos
+	tengo = False
+	index = 0
+
+	while(index < tamanoTablaNodos):
+		if(tablaNodos[index][1] == ipNodo):
+			tengo = True
+		index+=1	
+	
+	return tengo
+
 def agregarNodoTabla(ipNodo, espacioNodo):
 	global numeroNodo,tablaNodos,tamanoTablaNodos
-	print("Entre a agregarNodoTabla",tamanoTablaNodos, numeroNodo, tablaNodos)
-	tablaNodos.append([])
-	tablaNodos[tamanoTablaNodos].append(numeroNodo)
-	print("Agregue el nodo a tabla")
-	numeroNodo += 1
-	tablaNodos[tamanoTablaNodos].append(ipNodo)
-	print("Agregue el IP nodo a tabla")
-	tablaNodos[tamanoTablaNodos].append(espacioNodo)
-	print("Agregue espacio a tabla")
-	tamanoTablaNodos += 1
+	
+	if not ( buscarIP(ipNodo) ):
+		tablaNodos.append([])
+		tablaNodos[tamanoTablaNodos].append(numeroNodo)
+	
+		tablaNodos[tamanoTablaNodos].append(ipNodo)
+		tablaNodos[tamanoTablaNodos].append(espacioNodo)
+	
+		print(threading.current_thread().name," Se agregó en la tabla",tablaNodos)
+		numeroNodo += 1
+		tamanoTablaNodos += 1
+	else:	
+		print(threading.current_thread().name," Ya está en la tabla: agregarNodoTabla")
+		
 
 def elegirNodo(tamPaginaAGuardar):
 	global tablaNodos,tamanoTablaNodos
@@ -94,57 +116,73 @@ def elegirNodo(tamPaginaAGuardar):
 		i += 1
 	return numNodoElegido
 #Busca el nodo y retorna el indice de la tabla de nodos en el que se encuentra.
+
 def buscaNodo (numeroNodo):
 	global tamanoTablaNodos, tablaNodos
 	encontreNodo = False
 	indiceNodo = -1
 	i = 0
 	while(i < tamanoTablaNodos and encontreNodo == False):
-		print("entra al while")
 		if(tablaNodos[i][0] == numeroNodo):
-			print ("Entra al if")
 			encontreNodo = True
 			indiceNodo = i
 		i += 1
 	return indiceNodo
 
+def actualizarDatos(indiceNodo, id_pagina, espacioDisponibleRecibido, numeroNodo):
+	global tablaNodos, tablaPaginas, tamanoTablaPaginas
+
+	tablaNodos[indiceNodo][2] = espacioDisponibleRecibido
+	
+	tablaPaginas.append([])
+	tablaPaginas[tamanoTablaPaginas].append(id_pagina)
+	tablaPaginas[tamanoTablaPaginas].append(numeroNodo)
+	tamanoTablaPaginas+=1
+	print(threading.current_thread().name," Tabla Paginas: ",tablaPaginas)
+	
 def mandarAGuardar(numeroNodo, packAGuardar):
-	global puertoNodos, socketMLocal, socketNodos,tablaNodos,tablaPaginas,tamanoTablaPaginas
-	guardado = False #Booleano para saber si se guardo correctamente
+	global PORT_ID_NM, socketMLocal, socketNodos, tablaNodos
+	
+	id_pagina=0
+	indiceNodo = 0
+	ipNodo = 0
 	#Se busca el nodo en la tabla de nodos para obtener su IP
-	indiceNodo = buscaNodo(numeroNodo)
-	print("Indice nodo" + str(indiceNodo))
-	print("PACHA CON JET")
-	print (packAGuardar)
-	if(indiceNodo != -1):
-		ipNodo = tablaNodos[indiceNodo][1] #Necesaria para saber a quien se le envia el paquete.
-		#Se envia el paquete a esa IP mediante el respectivo protocolo TCP y se recibe la respuesta
-		packRecibido = sendTCPNodo(packGuardar, ipNodo) #Podria recibir 0
-		print (packRecibido)
-		datosPack = struct.unpack('BBI',packRecibido)
-		opCode = datosPack[0]
-		#Si todo sale bien
-		if( opCode == 2 ): #La condicion de este if puede cambiar a la vara del opCode (2), tambien se pude ver como el "Todo salio bien"
+	try:
+		indiceNodo = buscaNodo(numeroNodo)
+		if(indiceNodo != -1):
+			ipNodo = tablaNodos[indiceNodo][1] #Necesaria para saber a quien se le envia el paquete.		
+	except:
+		print(threading.current_thread().name," Error buscando nodo")
+	
+	while True: # Enviar a guardar
+		try:
+			packRecibido = sendTCPNodo(packAGuardar, ipNodo) #Podria recibir 0
+			datosPack = struct.unpack('=BBI',packRecibido)
+			
+			opCode = datosPack[0] #Si todo sale bien
+			id_pagina = datosPack[1]
 			espacioDisponibleRecibido = datosPack[2]
-			idPagina = datosPack[1]
-			#Actualizar el espacio disponible en la tabla de nodos
-			tablaNodos[indiceNodo][2] = espacioDisponibleRecibido
-			#Se agrega en la tabla de paginas
-			tablaPaginas[tamanoTablaPaginas].append(idPagina)
-			tablaPaginas[tamanoTablaPaginas].append(numeroNodo)
-			guardado = True
-			#Enviar paquete de respuesta a Aministrador de Memoria
-			formatoRespuestaA = "BB"
-			packRes = struct.pack(formatoRespuestaA,opCode,idPagina)
-			socketMLocal.sendall(packRes)
-	return guardado
+			print(threading.current_thread().name," Me retorno", datosPack,opCode)
+			if( opCode == 2 ): #La condicion de este if puede cambiar a la vara del opCode (2), tambien se pude ver como el "Todo salio bien"
+				print(threading.current_thread().name," Se guardo bien")
+				actualizarDatos(indiceNodo,id_pagina, espacioDisponibleRecibido, numeroNodo)
+				print(threading.current_thread().name," Paso actualizarDatos?")
+				break
+		except:
+			print(threading.current_thread().name," Error al guardar: mandarAGuardar")	
+			time.sleep(1)		
+			pass
+	
+	print(threading.current_thread().name," Return guardado")
+	return id_pagina
 
 def guardar(packAGuardar):
-	guardado = False
+	guardado = -1
 	tamanoPagina = packAGuardar[1]
-	while(guardado == False):
+	while(guardado == -1):
 		numeroNodo = elegirNodo(tamanoPagina)
 		guardado = mandarAGuardar(numeroNodo, packAGuardar)
+	return guardado	
 
 #Busca la pagina y retorna el indice de la tabla de paginas en el que se encuentra
 def buscaPagina(numeroPagina):
@@ -159,11 +197,9 @@ def buscaPagina(numeroPagina):
 		i += 1
 	return indicePagina
 
-
-
 #Se va a ver si se pasa tambien pack armado por parametro o se vuelve a armar dentro de metodo como se esta haciendo.
 def pedirPagina(numeroPagina):
-	global puertoNodos, socketMLocal, socketNodos,tablaNodos,tablaNodos
+	global PORT_ID_NM, socketMLocal, socketNodos,tablaNodos,tablaNodos
 	#Se busca en la tabla de paginas la pagina solicitada
 	indicePagina = buscaPagina(numeroPagina)
 	nodo = tablaPaginas[indicePagina][1]
@@ -173,7 +209,7 @@ def pedirPagina(numeroPagina):
 	#Para poder armar el paquete de pedir se necesitan los siguientes datos:
 	opCode = 1
 	idPagina = numeroPagina
-	formatoEnvio = "BB"
+	formatoEnvio = "=BB"
 	packEnvio = struct.pack(formatoEnvio,opCode,idPagina)
 	#Se envia el paquete a ipNodo mediante protocolo correspondiente y se recibe el paquete de respuesta
 	packRecibido = sendTCPNodo(packEnvio,ipNodo) #podria recibir 0
@@ -181,101 +217,114 @@ def pedirPagina(numeroPagina):
 	#Se envia por paquete el paquete recibido al administrador de memoria. (Sin importar su opCode)
 	socketMLocal.sendall(packRecibido)
 
-
-def escucharID():
-	global HOST,PORT
-	socketMLocal = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	while True:
-		try:
-			socketMLocal.bind((HOST, PORT))
+def escucharML():
+	global HOST,PORT_ID_ML,IP_ML
+	
+	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socketMLocal:
+			socketMLocal.bind(('', PORT_ID_ML))
 			socketMLocal.listen()
-			conn, addr = socketMLocal.accept()
-			packRec = conn.recv(4096) #Solo para que exista pero es el paquete recibido
-			opCode = packRec[0]
-			if(opCode == 0):
-				guardar(packRec)
-			elif(opCode == 1):
-				idPagina = packRec[1]
-				pedirPagina(idPagina)
-			socketMLocal.close()
-			break
+			while True:
+				try:
+					conn, addr = socketMLocal.accept()
+					with conn:
+						packRec = conn.recv(BUFFER_SIZE) #Solo para que exista pero es el paquete recibido
+						opCode = packRec[0]
+						IP_ML = addr[0]
+						if(opCode == 0):
+							id_pagina = guardar(packRec)
+							paquete = sendTCP_ML(id_pagina)
+							print(threading.current_thread().name," Paquete a ML: ",paquete)
+							socket_send.sendall(paquete)
+							
+						elif(opCode == 1):
+							idPagina = packRec[1]
+							pedirPagina(idPagina)
+						socketMLocal.close()
+						break
 
-		except:
-			pass
+				except:
+					pass
 
+def pelea():
+	while True:
+		print(threading.current_thread().name, "Waiting for Peleitas")
+		time.sleep(2)
+		pass
 
-"""
 def accionHiloPrincipal():
 	while(True):
-		socketMLocal = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-		socketMLocal.bind((HOST, PORT))
-		socketMLocal.listen()
-		conn, addr = socketMLocal.accept()
-		#Estoy escuchando mediante el receive
-		#Recibo el pack packRec
-		packRec = conn.recv(1024) #Solo para que exista pero es el paquete recibido
-		opCode = packRec[0]
-		if(opCode == 0):
-			guardar(packRec)
-		elif(opCode == 1):
-			idPagina = packRec[1]
-			pedirPagina(idPagina)
+		escucharML()
 
 def accionHiloNodos():
-	global PORT_BC_NM, socketNodos, killHilos ,tablaNodos
-	while(killHilos == False):
-		datosPack = getNodePack()
-		opCode = datosPack[0]
-
-		if(opCode == 5):
-			espacioDisponible = datosPack[1]
-			ip = socket.inet_aton(addr)
-			print(ip)
-			agregarNodoTabla(ip, espacioDisponible)
-			print(tablaNodos)
-			#Creo paquete de respuesta
-			packRpta = struct.pack('B', 2)
-			sendRptaBC(packRpta, ip)
-	"""
-def accionHiloPrincipal():
-	while(True):
-		escucharID()
-
-
-
-
-def accionHiloNodos():
-	global formatoBcast
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setblocking(0)
-	server_address = ('', PORT_BC_NM)
+	server_address = ('', PORT_NM_ID)
 	sock.bind(server_address)
 
-	print("Estoy escuchando")
 	while True:
 		try:
-			data, address = sock.recvfrom(4096)
+			data, address = sock.recvfrom(BUFFER_SIZE)
 			if(data != 0):
 				data = struct.unpack(formatoBcast, data)
 
 				IP_Nodo = address[0]
 				espacioDisponible = data[1]
-				print('Soy ID le di pelota')
 
 				if data[0] == 5: #aqui hay que chequear que el opcode del paquete haya sido el esperado, si no reenviar
-					print ("Respondiendo por TCP....")
+					print (threading.current_thread().name," Respondiendo por TCP....")
 					agregarNodoTabla(IP_Nodo,espacioDisponible)
 					#Creo paquete de respuesta
-					packRpta = struct.pack('B', 2)
+					packRpta = struct.pack('=B', 2)
 					sendRptaBC(packRpta, IP_Nodo)
 		except:
-			print ("Esperando")
+			print (threading.current_thread().name," Escuchando registros de nodos")
 			time.sleep(2)
 			pass
-	#sock.close()
+	sock.close()
 #Se crea el hilo que atiende a los nodos (Cuando quieren ser nodos)
-hiloNodos = threading.Thread(target=accionHiloNodos)
-hiloNodos.start()
 
-#(Guardar y pedir)
-accionHiloPrincipal()
+def printNodos(tablaNodos, tamanoTablaNodos):
+	index = 0
+	print("\n============INPUT============")
+	while(index < tamanoTablaNodos):
+		print(tablaNodos[index])
+		index+=1
+	print("==============\n")
+	
+	
+def printPaginas(tablaPaginas, tamanoTablaPaginas):	
+	index = 0
+	print("\n============INPUT============")
+	while(index < tamanoTablaPaginas):
+		print(tablaPaginas[index])
+		index+=1
+	print("==============\n")	
+
+def responderComando():
+	global tablaNodos, tablaPaginas, tamanoTablaPaginas, tamanoTablaNodos
+	
+	while True:
+		commando = str(input())
+		if(commando == "nodo"):
+			printNodos(tablaNodos, tamanoTablaNodos)
+		elif(commando == "pagina"):
+			printPaginas(tablaPaginas, tamanoTablaPaginas)
+		else:
+			pass
+
+def iniciarHilos():
+	hiloPelea = threading.Thread(target=pelea,name='[Pelea]')
+	#hiloPelea.start()
+	
+	hiloNodos = threading.Thread(target=accionHiloPrincipal,name='		[Principal]')
+	hiloNodos.start()
+	
+	hiloPrincipal = threading.Thread(target=accionHiloNodos,name="[Broadcast]")
+	hiloPrincipal.start()
+	
+	hiloInput = threading.Thread(target=responderComando,name="INPUT")
+	hiloInput.start()
+	
+	
+
+iniciarHilos()

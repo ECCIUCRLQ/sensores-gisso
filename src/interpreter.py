@@ -72,7 +72,7 @@ def contar(cantidad_y):
 # Recorre la matriz de datos paquete por paquete, llama al método para sacar la hora de cada paquete
 def getData():
 	for i in range(len(matrizRetorno)):
-		for j in range(2,len(matrizRetorno[i][0])):
+		for j in range(0,len(matrizRetorno[i][0])):
 			print
 			getHour(matrizRetorno[i][0][j])	
 	contar(cantidad_y)		

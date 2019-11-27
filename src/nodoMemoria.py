@@ -17,8 +17,9 @@ import struct
 punteroMeta = 0
 punteroDatos = 4
 IDIP = 0
+
 BUFFER_SIZE = 692000
-SOCKET_BC = 6000
+PORT_NM_ID = 6000
 
 sendBcast = 0
 
@@ -136,7 +137,7 @@ def broadcast():
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	
-	server_address = ('255.255.255.255', SOCKET_BC)
+	server_address = ('255.255.255.255', PORT_NM_ID)
 
 	paqueteBcast = struct.pack('=BI',5,tamanoDisponible)
 	try:
