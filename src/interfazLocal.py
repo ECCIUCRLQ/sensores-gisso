@@ -98,7 +98,7 @@ def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
 	elif(datoAleer == 2):
 		packUtil = struct.pack('=If',var[1],var[2])
 		
-	#print("Contenido packUtil",packUtil)
+	#print("Contenido packUtil: ",packUtil)
 	return packUtil
 
 
@@ -112,12 +112,10 @@ def guardar(pack):#Busca el sensor ID, sino esta entonces lo agrega a la page ta
 		print("Llamo a Malloc")
 		mallocMaravilloso(getSensorId(pack)) 
 	packDatos = datoUtil(pack)
-	print("Llamo a guardar")
 	buzonLlamados.put(2) #Para llamar a guardar()
 	buzonParametros.put(packDatos) #Para pasar el pack por parametro
 	buzonParametros.put(pageTable[ind][len(pageTable[ind])-1]) #Para pasar el idPagina actual asociado a ese sensor.
 	numP = buzonRetornos.get()
-	print("Ya guardado y recibido")
 	#Si le habilito a el sensor una pagina nueva
 	if(numP != -1):
 		#Se agrega la pagina a la page table.

@@ -21,7 +21,7 @@ soy_activa = False
 hay_activa = False
 
 # IPs
-RED_LAB = '10.1.255.255'
+RED_LAB = '127.0.0.1'
 IPActiva = '127.0.0.1'
 HOST = '10.1.138.93'  # Standard loopback interface address (localhost)
 IP_ML = ''
@@ -322,7 +322,7 @@ def accionHiloPrincipal():
 def accionHiloNodos():
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setblocking(0)
-	server_address = ('10.1.255.255', PORT_NM_ID)
+	server_address = ('127.0.0.1', PORT_NM_ID)
 	sock.bind(server_address)
 
 	while True:

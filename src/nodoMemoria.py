@@ -138,7 +138,7 @@ def broadcast():
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	
-	server_address = ('10.1.255.255', PORT_NM_ID)
+	server_address = ('127.0.0.1', PORT_NM_ID)
 
 	paqueteBcast = struct.pack('=BI',5,tamanoDisponible)
 	try:
@@ -175,7 +175,9 @@ def recibirTCP():
 				if(opCode == 0):
 					print("Guardando")
 					idPagina = struct.unpack("=B", data[1:2])[0]
+					print ("ID Pagina recibido: ", idPagina)
 					tamanio = struct.unpack("=I", data[2:6])[0]
+					print ("Tamano recibido: ", tamanio)
 					datos = data[6:]
 					print("Datos ",datos)
 					datosGuardar = (idPagina,tamanio,datos)

@@ -7,7 +7,8 @@ import pdb
 import socket
 #IPDistribuida = 192.168.1.100
 PORT = 2000           # Port to listen on (non-privileged ports are > 1023)
-IPDistribuida = '10.1.137.53'
+#IPDistribuida = '10.1.137.53'
+IPDistribuida = '127.0.0.1'
 numeroPagina = 0
 tamanoPaginaTotal = 84600
 memoriaPrincipal = [] #Memoria principal o local
@@ -64,15 +65,20 @@ def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a 
 	
 	#Para el paquete de mandar a guardar en M.Distribuida se ocupan los siguientes datos:
 	opCode = 0
+	print ("1) OPCODE ENVIADO EN GUARDAR: ",opCode)
 	#idPagina = memoriaPrincipal[indPagSwap][0]
 	idPagina = pageArray[indPagSwap]
+	print ("2) ID PAGINA ENVIADO EN GUARDAR: ",idPagina)
 	tamPag = tamanoPaginaTotal
+	print( "3) TAMANO PAGINA ENVIADO: ", tamPag)
 	datosPag = memoriaPrincipal[indPagSwap] # Copiar los datos de la pagina 
 	formatoGuardar = "=BBI"
 	#Se empaquetan
 	packGuardar = struct.pack(formatoGuardar,opCode,idPagina,tamPag)
+	print("Paquete mandado a guardar sin DATOS: ", packGuardar)
 	#packGuardar += b''.join(datosPag[2:])
 	packGuardar += datosPag
+	print("Paquete mandado a guardar: ", packGuardar)
 	#Se envian esos datos mediante el protocolo TCP
 	packRecibido = sendTCP(packGuardar)
 
@@ -155,15 +161,20 @@ def habilitarPagina():
 	global numeroPagina, contadorFilaActual, numeroFilasMemoria, pageArray
 	#Para cuando la memoria principal tiene filas vacias
 	if (contadorFilaActual < numeroFilasMemoria): 
+		#print("CON contadorFilaActual = ", contadorFilaActual)
 		pageArray[contadorFilaActual] = numeroPagina
+		print("Agregue pagina, Page Array: ", pageArray)
 		numeroPagina += 1
 		contadorFilaActual += 1
 		
 	#Cuando esta llena, entonces se empieza a hacer swap.
 	else:
+		print("Soy Habilitar Pagina y Tuve que Swapear")
 		indMemSwap = busquedaPaginaSwap()
+		print ("Elegi con indice de swap al indice: ", indMemSwap)
 		guardado = False
 		while (guardado == False):
+			print ("Llamo al metodo pasar pagina a distribuida")
 			guardado = pasarPaginaLocalADistribuida(indMemSwap)
 		#Agregar nueva pagina en memoria local
 		pageArray[indMemSwap] = numeroPagina 
@@ -262,8 +273,8 @@ while(True):
 		parametro1 = buzonParametros.get()
 		parametro2 = buzonParametros.get()
 		numPage = guardar(parametro1,parametro2)
-		contadorPrueba += 1 
-		print ("ContadorPrueba: ",contadorPrueba)
+		#contadorPrueba += 1 
+		#print ("ContadorPrueba: ",contadorPrueba) Llega como a 42300
 		buzonRetornos.put(numPage)
 	
 		
