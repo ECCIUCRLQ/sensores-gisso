@@ -65,7 +65,8 @@ def sendTCPNodo(paquete, IP_Nodo):
 
 			except:
 				print(threading.current_thread().name," Error al enviar: sendTCPNodo")
-				pass		
+				pass
+		print("TCP: ",packRetorno)		
 	return packRetorno
 
 #Metodo para la respuesta
@@ -211,6 +212,7 @@ def pedirPagina(numeroPagina):
 	indicePagina = buscaPagina(numeroPagina)
 	nodo = tablaPaginas[indicePagina][1]
 	#Se busca el nodo en la tabla de nodos para obtener su IP
+	print("Antes buscar nodo")
 	indiceNodo = buscaNodo(nodo)
 	ipNodo = tablaNodos[indiceNodo][1] #Necesaria para saber a quien se le envia el paquete.
 	#Para poder armar el paquete de pedir se necesitan los siguientes datos:
@@ -219,8 +221,9 @@ def pedirPagina(numeroPagina):
 	formatoEnvio = "=BB"
 	packEnvio = struct.pack(formatoEnvio,opCode,idPagina)
 	#Se envia el paquete a ipNodo mediante protocolo correspondiente y se recibe el paquete de respuesta
+	print("Antes send TCPNodo")
 	packRecibido = sendTCPNodo(packEnvio,ipNodo) #podria recibir 0
-
+	print("Despues send TCPNodo")
 	return packRecibido
 
 def escucharML():
@@ -228,31 +231,33 @@ def escucharML():
 	
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socketMLocal:
 			socketMLocal.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-			socketMLocal.bind(('', PORT_ID_ML))
+			socketMLocal.bind(('0.0.0.0', PORT_ID_ML))
 			socketMLocal.listen()
-			while True:
-				try:
-					conn, addr = socketMLocal.accept()
-					with conn:
+			conn, addr = socketMLocal.accept()##Movi esto 2 lineas mas arriba
+			with conn:
+				while True:
+					try:
+						
+						print("Esperando solicitud")
 						packRec = conn.recv(BUFFER_SIZE) #Solo para que exista pero es el paquete recibido
 						opCode = packRec[0]
 						IP_ML = addr[0]
 						if(opCode == 0): # Si se gurdó correctamente
+							print("Guardando")
 							id_pagina = guardar(packRec)
 							paquete = paqueteTCP_ML(id_pagina)
-							print(threading.current_thread().name," Paquete a ML: ",paquete)
+							print(threading.current_thread().name," Paquete a ML: ",paquete, conn)
 							conn.sendall(paquete)
 							
 						elif(opCode == 1): # Retorna si pedio
+							print("Pidiendo")
 							idPagina = packRec[1]
-							pedirPagina(idPagina)
+							paquete = pedirPagina(idPagina)
 							conn.sendall(paquete)
-						socketMLocal.close()
-						break
 
-				except:
-					pass
-
+					except:
+						pass
+			socketMLocal.close()
 	
 	# OpCodes Champions:
 	#		0 -> Quiero ser
@@ -317,7 +322,7 @@ def accionHiloPrincipal():
 def accionHiloNodos():
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setblocking(0)
-	server_address = ('', PORT_NM_ID)
+	server_address = ('10.1.255.255', PORT_NM_ID)
 	sock.bind(server_address)
 
 	while True:
@@ -382,14 +387,15 @@ def soyActiva():
 def iniciarHilos():
 	global soyActiva
 
-	hiloInput = threading.Thread(target=responderComando,name="INPUT") # Hilo extra para debugeo
-	hiloInput.start()
-	
-	hiloPelea = threading.Thread(target=champions,name='[Champions]') # encargado de 
-	hiloPelea.start()
-	while True:
-		if(soyActiva):
-			soyActiva()
+	#hiloInput = threading.Thread(target=responderComando,name="INPUT") # Hilo extra para debugeo
+	#hiloInput.start()
+	soyActiva()
+	#accionHiloPrincipal()
+	#hiloPelea = threading.Thread(target=champions,name='[Champions]') # encargado de 
+	#hiloPelea.start()
+	#while True:
+	#	if(soyActiva):
+	#		soyActiva()
 
 iniciarHilos()
 

@@ -18,7 +18,7 @@ punteroDatos = 4
 IDIP = 0
 
 BUFFER_SIZE = 692000
-PORT_NM_ID = 5000
+PORT_NM_ID = 6000
 
 sendBcast = 0
 
@@ -190,7 +190,7 @@ def recibirTCP():
 					print("ID pagina ",idPagina)
 					correcto = buscarDatos(idPagina)
 					if(correcto != -1):
-						correcto = struct.pack("=B",3)
+						correcto = struct.pack("=BB",3,idPagina)
 						correcto = correcto + datos
 						
 					else:
