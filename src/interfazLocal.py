@@ -21,10 +21,12 @@ def mallocMaravilloso(sensorId): #Agrego en la page table y despues habilito pag
 	pageTable.append([])
 	pageTable[tamanoPT].append(sensorId)
 	buzonLlamados.put(0) #Para llamar a habilitarPagina()
+	print("Llame al habilitar")
 	nuevaPag = buzonRetornos.get() 
 	#Agrego la nueva pagina a la page table
 	pageTable[tamanoPT].append(nuevaPag)
 	tamanoPT += 1
+	print("PageTable ",pageTable)
 	
 def getPaginasSensor(sensorId):# Busca en la page table y retorna los numeros de pagina referentes a un sensorId, lo utiliza pedirDatos()
 	global pageTable,tamanoPT
@@ -92,17 +94,7 @@ def datoUtil(pack):#Desempaqueta y retorna fecha y dato en un paquete
 	if(datoAleer == 0):
 		packUtil = struct.pack('=IB',var[1],var[2])
 	elif(datoAleer == 1):
-		###DEBUG: Si esta entrando aqui
-		print (var[1]) #Imprime bien estos datos
-		print (var[2])
 		packUtil = struct.pack('=II',var[1],((int)(var[2])) )
-		print(packUtil)
-		#datos = struct.unpack('=II', packUtil)
-		print(packUtil[0:4])
-		a=struct.unpack("=I",packUtil[4:8])[0]
-		print(a)
-		#print(datos)
-		###DEBUG: Todo apunta que hasta aqui todo bien, y es el mismo paquete que se estaba guardando tambien.
 	elif(datoAleer == 2):
 		packUtil = struct.pack('=If',var[1],var[2])
 		
@@ -117,16 +109,21 @@ def guardar(pack):#Busca el sensor ID, sino esta entonces lo agrega a la page ta
 	global pageTable
 	ind = buscarSensorId(getSensorId(pack))
 	if(ind == -1):
+		print("Llamo a Malloc")
 		mallocMaravilloso(getSensorId(pack)) 
 	packDatos = datoUtil(pack)
+	print("Llamo a guardar")
 	buzonLlamados.put(2) #Para llamar a guardar()
 	buzonParametros.put(packDatos) #Para pasar el pack por parametro
 	buzonParametros.put(pageTable[ind][len(pageTable[ind])-1]) #Para pasar el idPagina actual asociado a ese sensor.
 	numP = buzonRetornos.get()
+	print("Ya guardado y recibido")
 	#Si le habilito a el sensor una pagina nueva
 	if(numP != -1):
 		#Se agrega la pagina a la page table.
 		pageTable[ind].append(numP)
+		print("Agregue una nueva pagina")
+		print ("PageTable: ",pageTable)
 		
 	
 	

@@ -7,7 +7,7 @@ import pdb
 import socket
 #IPDistribuida = 192.168.1.100
 PORT = 2000           # Port to listen on (non-privileged ports are > 1023)
-IPDistribuida = '10.1.137.17'
+IPDistribuida = '10.1.137.53'
 numeroPagina = 0
 tamanoPaginaTotal = 84600
 memoriaPrincipal = [] #Memoria principal o local
@@ -15,20 +15,18 @@ memoriaPrincipal = [] #Memoria principal o local
 pageArray = [] # Contiene los ID Pagina que estan en memoria Local
 numeroFilasMemoria = 4 #Tamano de la memoria local
 contadorFilaActual = 0
-max8 = 10 #10575
-max5 = 10 #16920
 buzonLlamados = sysvmq.Queue(17)
 buzonRetornos = sysvmq.Queue(16)
 buzonParametros = sysvmq.Queue(15)
-
+contadorPrueba = 0
 
 #Codigos de llamados
 #HabilitarPagina = 0
 #pedirPagina =1
 #guardar=2
 
-#for i in range(numeroFilasMemoria):
-#    memoriaPrincipal.append([])
+for i in range(numeroFilasMemoria):
+    memoriaPrincipal.append(bytearray([]))
 
 #Se llena el pageArray
 for i in range(numeroFilasMemoria):
@@ -73,10 +71,8 @@ def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a 
 	formatoGuardar = "=BBI"
 	#Se empaquetan
 	packGuardar = struct.pack(formatoGuardar,opCode,idPagina,tamPag)
-	print ("PackGuardar: ",tamPag, packGuardar)
 	#packGuardar += b''.join(datosPag[2:])
 	packGuardar += datosPag
-	print ("Paquete A guardar",packGuardar)
 	#Se envian esos datos mediante el protocolo TCP
 	packRecibido = sendTCP(packGuardar)
 
@@ -91,7 +87,6 @@ def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a 
 	if(opCode == 2):
 		guardado = True
 	#idPagina
-	print("Salio Guardado")
 	return guardado
 
 def pasarPaginaDistribuidaALocal(indPagSwap, numP):
@@ -157,7 +152,7 @@ def busquedaPaginaMemoriaPrincipal(numPABuscar):#Sirve para localizar el indice 
 			
 #Habilitarle una pagina a un proceso y la coloca en la memoria principal     
 def habilitarPagina():
-	global numeroPagina, contadorFilaActual, numeroFilasMemoria
+	global numeroPagina, contadorFilaActual, numeroFilasMemoria, pageArray
 	#Para cuando la memoria principal tiene filas vacias
 	if (contadorFilaActual < numeroFilasMemoria): 
 		pageArray[contadorFilaActual] = numeroPagina
@@ -267,6 +262,8 @@ while(True):
 		parametro1 = buzonParametros.get()
 		parametro2 = buzonParametros.get()
 		numPage = guardar(parametro1,parametro2)
+		contadorPrueba += 1 
+		print ("ContadorPrueba: ",contadorPrueba)
 		buzonRetornos.put(numPage)
 	
 		
