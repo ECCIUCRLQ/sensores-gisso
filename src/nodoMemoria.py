@@ -138,7 +138,7 @@ def broadcast():
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	
-	server_address = ('127.0.0.1', PORT_NM_ID)
+	server_address = ('10.1.255.255', PORT_NM_ID)
 
 	paqueteBcast = struct.pack('=BI',5,tamanoDisponible)
 	try:
@@ -240,9 +240,9 @@ def comLs():
 				fechaCons = time.ctime(fechaCons)
 				print((fechaCrea)+"\t"+(fechaCons)+"\t"+str(identificador)+"\t"+str(tam))
 				indice += 17
-			archivo.seek(0)
-			bina = archivo.read()
-			print(bina)
+			#archivo.seek(0)
+			#bina = archivo.read()
+			#print(bina)
 			archivo.close()
 		else:
 			print("El comando no existe")
