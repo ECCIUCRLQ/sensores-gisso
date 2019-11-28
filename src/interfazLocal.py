@@ -48,7 +48,6 @@ def getTamanoPaquete(sensor): #Retorna el tamaño de celda en la memoria princip
 	return tamanoPaquete
 
 def pedirDatos(sensorId): # Pido datos por medio de un sensor ID,la interfaz los va a buscar a la pagetable y se comunica con la memoria principal para retornarlos
-	numerosPaginaSensor = []
 	matrizRetorno = []
 	tamanoPaquetesSensor = getTamanoPaquete(sensorId)
 	numeroPaginaSensor = getPaginasSensor(sensorId)

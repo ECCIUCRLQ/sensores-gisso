@@ -18,7 +18,7 @@ punteroDatos = 4
 IDIP = 0
 
 BUFFER_SIZE = 692000
-PORT_NM_ID = 6000
+PORT_NM_ID = 8000
 
 sendBcast = 0
 
@@ -158,7 +158,7 @@ def recibirTCP():
 	PORT = 3114        # Port to listen on (non-privileged ports are > 1023)
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 		s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		s.bind(('', PORT))
+		s.bind(('10.164.71.112', PORT))
 		s.listen()
 		while True:
 			conn, addr = s.accept()
@@ -240,9 +240,9 @@ def comLs():
 				fechaCons = time.ctime(fechaCons)
 				print((fechaCrea)+"\t"+(fechaCons)+"\t"+str(identificador)+"\t"+str(tam))
 				indice += 17
-			#archivo.seek(0)
-			#bina = archivo.read()
-			#print(bina)
+			archivo.seek(0)
+			bina = archivo.read()
+			print(bina)
 			archivo.close()
 		else:
 			print("El comando no existe")

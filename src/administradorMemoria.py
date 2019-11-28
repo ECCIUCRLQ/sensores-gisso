@@ -8,7 +8,7 @@ import socket
 #IPDistribuida = 192.168.1.100
 PORT = 2000           # Port to listen on (non-privileged ports are > 1023)
 #IPDistribuida = '10.1.137.53'
-IPDistribuida = '127.0.0.1'
+IPDistribuida = '10.1.137.106'
 numeroPagina = 0
 tamanoPaginaTotal = 84600
 memoriaPrincipal = [] #Memoria principal o local
@@ -25,6 +25,12 @@ contadorPrueba = 0
 #HabilitarPagina = 0
 #pedirPagina =1
 #guardar=2
+
+#Se crea socket para la comunicacion con la ID
+socket_send = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+print("Antes del connect")
+socket_send.connect((IPDistribuida, PORT))
+print ("Despues del connect")
 
 for i in range(numeroFilasMemoria):
     memoriaPrincipal.append(bytearray([]))
@@ -80,7 +86,11 @@ def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a 
 	packGuardar += datosPag
 	print("Paquete mandado a guardar: ", packGuardar)
 	#Se envian esos datos mediante el protocolo TCP
-	packRecibido = sendTCP(packGuardar)
+	#packRecibido = sendTCP(packGuardar)
+	socket_send.sendall(packGuardar)
+	#Se recibe respuesta
+	packRecibido = socket_send.recv(4096)
+	print("Recibido ", packRecibido)
 
 	#Para borrar la pagina de memoria local
 	del memoriaPrincipal[indPagSwap]
@@ -106,9 +116,11 @@ def pasarPaginaDistribuidaALocal(indPagSwap, numP):
 	#Se empaquetan y se envian los datos mediante el protocolo correspondiente.
 	formatoPedir = "=BB"
 	packPedir = struct.pack(formatoPedir,opCode,idPagina)
-	packRecibido = sendTCP(packPedir)
+	#packRecibido = sendTCP(packPedir)
+	socket_send.sendall(packPedir)
 	#Se recibe el paquete de respuesta
-	
+	packRecibido = socket_send.recv(4096)
+	print("Recibido Confirmacion Pedir", packRecibido)
 	#opCodeR = struct.unpack("=B",packRecibido[0:1])[0]
 	opCodeR = packRecibido[0]
 	#En caso de que no haya error:
@@ -118,6 +130,7 @@ def pasarPaginaDistribuidaALocal(indPagSwap, numP):
 	#Colocar la pagina en memoria local
 	memoriaPrincipal[indPagSwap] = datosPagina # Colocar en memoria local y actualizar frame table
 	pageArray[indPagSwap] = packRecibido[1] #Agrego el idPagina al pageArray
+
 
 	#Si no hubo error 
 	if(opCodeR == 3):
@@ -158,7 +171,7 @@ def busquedaPaginaMemoriaPrincipal(numPABuscar):#Sirve para localizar el indice 
 			
 #Habilitarle una pagina a un proceso y la coloca en la memoria principal     
 def habilitarPagina():
-	global numeroPagina, contadorFilaActual, numeroFilasMemoria, pageArray
+	global numeroPagina, contadorFilaActual, numeroFilasMemoria, pageArray, memoriaPrincipal
 	#Para cuando la memoria principal tiene filas vacias
 	if (contadorFilaActual < numeroFilasMemoria): 
 		#print("CON contadorFilaActual = ", contadorFilaActual)
@@ -174,10 +187,18 @@ def habilitarPagina():
 		print ("Elegi con indice de swap al indice: ", indMemSwap)
 		guardado = False
 		while (guardado == False):
-			print ("Llamo al metodo pasar pagina a distribuida")
+			#print("Estado memoria antes: ", memoriaPrincipal[indMemSwap])
+			#print ("Llamo al metodo pasar pagina a distribuida")
+			#print("-----------------------------------------------------------------------------------")
 			guardado = pasarPaginaLocalADistribuida(indMemSwap)
 		#Agregar nueva pagina en memoria local
 		pageArray[indMemSwap] = numeroPagina 
+		#paginaPedir = 0
+		#pasarPaginaDistribuidaALocal(indMemSwap,paginaPedir) #Pide la pagina 0 de vuelta
+		#pageArray[indMemSwap] = 0
+		print ("Agregue la nueva, PageArray: ", pageArray)
+		#pasarPaginaDistribuidaALocal(1,paginaPedir)
+		#print("MEMORIA DESPUES DE RECIBIR LA PAGINA PEDIDA: ", memoriaPrincipal[indMemSwap])
 		numeroPagina += 1
 	return numeroPagina-1
 
@@ -230,11 +251,13 @@ def guardar(pack,numP): #Guarda en memoria. Puede tener varias condiciones que l
 		else:
 			#Se habilita una nueva pagina
 			pagNueva = habilitarPagina()
+			print("Sali del habilitar con pagNueva: ", pagNueva)
 			#Ver en que posicion de memoria local quedo, y luego ya se puede guardar
 			indiceP = busquedaPaginaMemoriaPrincipal(pagNueva)
 			#Se guarda
 			memoriaPrincipal[indiceP] += pack
 			numeroPag = pagNueva
+			#Termina este tambien
 	#Si no esta en memoria local 
 	else:
 		indMemSwap = busquedaPaginaSwap()
