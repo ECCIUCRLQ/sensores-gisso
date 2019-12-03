@@ -8,7 +8,7 @@ import socket
 #IPDistribuida = 192.168.1.100
 PORT = 2000           # Port to listen on (non-privileged ports are > 1023)
 #IPDistribuida = '10.1.137.53'
-IPDistribuida = '10.1.137.106'
+IPDistribuida = '127.0.0.1'
 numeroPagina = 0
 tamanoPaginaTotal = 84600
 memoriaPrincipal = [] #Memoria principal o local
@@ -77,14 +77,14 @@ def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a 
 	print ("2) ID PAGINA ENVIADO EN GUARDAR: ",idPagina)
 	tamPag = tamanoPaginaTotal
 	print( "3) TAMANO PAGINA ENVIADO: ", tamPag)
-	datosPag = memoriaPrincipal[indPagSwap] # Copiar los datos de la pagina 
+	datosPag = memoriaPrincipal[indPagSwap][:] # Copiar los datos de la pagina 
 	formatoGuardar = "=BBI"
 	#Se empaquetan
 	packGuardar = struct.pack(formatoGuardar,opCode,idPagina,tamPag)
 	print("Paquete mandado a guardar sin DATOS: ", packGuardar)
 	#packGuardar += b''.join(datosPag[2:])
 	packGuardar += datosPag
-	print("Paquete mandado a guardar: ", packGuardar)
+	#print("Paquete mandado a guardar: ", packGuardar)
 	#Se envian esos datos mediante el protocolo TCP
 	#packRecibido = sendTCP(packGuardar)
 	socket_send.sendall(packGuardar)
@@ -93,16 +93,25 @@ def pasarPaginaLocalADistribuida(indPagSwap): #Recibe el indice de la página a 
 	print("Recibido ", packRecibido)
 
 	#Para borrar la pagina de memoria local
-	del memoriaPrincipal[indPagSwap]
+	tamano1 = len(memoriaPrincipal[indPagSwap])
+	memoriaPrincipal[indPagSwap] = bytearray([])
+	tamano2 = len(memoriaPrincipal[indPagSwap])
+	print("MEMORIA DESPUES DE Habilitar la pagina: ", memoriaPrincipal[indPagSwap])
+	print("----------------------------------------------------------------------------------------------")
+	print ("Tamano de arreglo antes del DEL: ", tamano1)
+	print ("Tamano de arreglo despues del DEL: ", tamano2)
 	pageArray[indPagSwap] = -1
-	
+	#print("Elimineeeeeeeeeeeeeeeee")
 	#Se recibe una confirmacion con: 
 	#datosPack = struct.unpack('BB',packRecibido)
 	opCode = packRecibido[0]
+	print ("OpCode RECIBIDO: ", opCode)
 	#Si no hubo error
 	if(opCode == 2):
 		guardado = True
 	#idPagina
+	#print("MEMORIA DESPUES DE Habilitar la pagina: ", memoriaPrincipal[indPagSwap])
+	#print("----------------------------------------------------------------------------------------------")
 	return guardado
 
 def pasarPaginaDistribuidaALocal(indPagSwap, numP):
@@ -193,12 +202,10 @@ def habilitarPagina():
 			guardado = pasarPaginaLocalADistribuida(indMemSwap)
 		#Agregar nueva pagina en memoria local
 		pageArray[indMemSwap] = numeroPagina 
-		#paginaPedir = 0
-		#pasarPaginaDistribuidaALocal(indMemSwap,paginaPedir) #Pide la pagina 0 de vuelta
-		#pageArray[indMemSwap] = 0
 		print ("Agregue la nueva, PageArray: ", pageArray)
-		#pasarPaginaDistribuidaALocal(1,paginaPedir)
-		#print("MEMORIA DESPUES DE RECIBIR LA PAGINA PEDIDA: ", memoriaPrincipal[indMemSwap])
+		#print("MEMORIA DESPUES DE Habilitar la pagina: ", memoriaPrincipal[indMemSwap])
+		#print("----------------------------------------------------------------------------------------------")
+		print ("Indiceeeeeeeeee: ", indMemSwap)
 		numeroPagina += 1
 	return numeroPagina-1
 

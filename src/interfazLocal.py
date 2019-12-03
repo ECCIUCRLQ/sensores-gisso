@@ -47,6 +47,7 @@ def getTamanoPaquete(sensor): #Retorna el tamaño de celda en la memoria princip
 		tamanoPaquete = 8
 	return tamanoPaquete
 
+"""
 def pedirDatos(sensorId): # Pido datos por medio de un sensor ID,la interfaz los va a buscar a la pagetable y se comunica con la memoria principal para retornarlos
 	matrizRetorno = []
 	tamanoPaquetesSensor = getTamanoPaquete(sensorId)
@@ -68,8 +69,18 @@ def pedirDatos(sensorId): # Pido datos por medio de un sensor ID,la interfaz los
 		matrizRetorno[i].append(arregloTemporal)
 	
 	buzonRetornoGraficador.put(matrizRetorno)
-	
-def buscarSensorId(sensorId):#Busco el sensorId en la page table y me retorna el indice
+"""
+
+def pedirDatos(pageId): # Pido datos por medio de un sensor ID,la interfaz los va a buscar a la pagetable y se comunica con la memoria principal para retornarlos
+	#Voy pidiendo cada una de las paginas
+	buzonLlamados.put(1) #Para llamar a pedirPagina
+	buzonParametros.put(pageId) #Se le pasa la id de pagina por parametro.
+	#Recibo pagina en forma de un bytearray
+	paginaDevuelta = buzonRetornos.get()
+	print ("Pagina: ", pageId)
+	print("Pagina devuelta: ", paginaDevuelta)
+
+def buscarSensorId(sensorId): #Busco el sensorId en la page table y me retorna el indice
 	global pageTable,tamanoPT
 	indice = -1
 	i = 0
@@ -133,13 +144,17 @@ while(True):
 	if 	(packRecolector != -1): # Si pack recolector es distinto de -1 lo guarda
 		#Esta llegando el mismo paquete (de prueba.py)
 		#print (packRecolector)
+		print("Va a llamar a guardar")
 		guardar(packRecolector)
+		print ("Guardooooooooooooo la puyaaaaaaaaaa")
 	sID = -1
 	try:
 		sID = buzonLlamadoGraficador.get_nowait() #Buzón graficador recoge lo que le envie el graficador y lo guarda en sID 
 	except:										#Si SID es distinto de -1 entonces pide los datos referentes a ese sensorID
 		pass
 	if(sID != -1):
+		print ("A punto de llamar a pedirDatosssssssssssssssssssssssssssss")
 		pedirDatos(sID)
+		print("Pediiiiiiiiiii paginaaaaaaaaaaaaaaaaaaa")
 	#time.sleep(1)
 		

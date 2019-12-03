@@ -21,9 +21,9 @@ soy_activa = False
 hay_activa = False
 
 # IPs
-RED_LAB = '10.1.255.255'
+RED_LAB = '127.0.0.1'
 IPActiva = '127.0.0.1'
-HOST = '10.1.138.93'  # Standard loopback interface address (localhost)
+HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 IP_ML = ''
 # Cromas
 PORT_NM_ID = 6000
@@ -231,7 +231,7 @@ def escucharML():
 	
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socketMLocal:
 			socketMLocal.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-			socketMLocal.bind(('0.0.0.0', PORT_ID_ML))
+			socketMLocal.bind(('127.0.0.1', PORT_ID_ML))
 			socketMLocal.listen()
 			conn, addr = socketMLocal.accept()##Movi esto 2 lineas mas arriba
 			print("Conectado con: ",addr)

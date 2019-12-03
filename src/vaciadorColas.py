@@ -7,6 +7,7 @@ buzonRetornos=sysvmq.Queue(16)#Buzon para recibir la respuesta del administrador
 buzonParametros=sysvmq.Queue(15)
 buzonShock = sysvmq.Queue(1)
 buzonMov = sysvmq.Queue(2)
+buzonLlamadoGraficador = sysvmq.Queue(69)
 while(True):
 	try:
 		buzonGeneral.get_nowait()
@@ -30,6 +31,10 @@ while(True):
 		pass
 	try:	
 		buzonMov.get_nowait()
+	except:
+		pass
+	try:
+		buzonLlamadoGraficador.get_nowait()
 	except:
 		pass		
 		
