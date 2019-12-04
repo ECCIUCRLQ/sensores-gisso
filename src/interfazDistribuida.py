@@ -272,10 +272,10 @@ def escucharML():
 						pass
 			socketMLocal.close()
 	
-	# OpCodes Champions:
-	#		0 -> Quiero ser
-	#		1 -> Soy activa
-	#		2 -> KeepAlive
+# OpCodes Champions:
+#		0 -> Quiero ser
+#		1 -> Soy activa
+#		2 -> KeepAlive
 		
 def recibir_dump(tabla):
 	pass
@@ -285,8 +285,11 @@ def recibir_parte(data):
 
 def chamTimeOut(segundos):
 	global championsTimeOut
+
+	print(threading.current_thread().name," Empieza Timeout")
 	time.sleep(segundos)
 	championsTimeOut = 1
+	print(threading.current_thread().name," Fin Timeout")
 
 def champions():
 	global quieren_pelea, mi_mac, ronda_champions, soy_activa, hay_activa, championsTimeOut, soy_pasiva, huboCambio
@@ -305,7 +308,6 @@ def champions():
 
 	mio = 0
 
-	print ("antes del juail")
 	while championsTimeOut==0 and soy_pasiva == False:
 		if not(soy_pasiva):
 			if(mio == 0):
@@ -321,7 +323,6 @@ def champions():
 
 					elif(data[0] == 1):
 						recibido = 1
-						print ("Primer if")
 						soy_pasiva = True
 						recibir_dump(data) # TODO = Falta implementar
 
@@ -331,11 +332,9 @@ def champions():
 							if( mi_mac > data[1]):
 								ronda_champions+=1
 							else:	
-								print ("Segundo if")
 								soy_pasiva = True
 								ronda_champions = 3
 						elif(data[2] > ronda_champions):
-							print ("Tercer if")
 							soy_pasiva = True
 							ronda_champions = 3
 
@@ -364,17 +363,13 @@ def champions():
 			except:
 				pass
 	
-	print ("despues del juail")
 	
-	if(soy_pasiva == True):
-		print ("inside")
-		pass
-	else:
-		print ("en el else")
+	if not (soy_pasiva):
 		soy_activa = True
 		dump1, dump2 = crearDump(huboCambio)
 		paqueteCambio = paquete_broadcast_ID_ID(2,tamanoTablaPaginas,tamanoTablaNodos,dump1,dump2)
 		socket_champions.sendto(paqueteCambio, server_address)
+		
 
 	socket_champions.close()
 
@@ -524,29 +519,72 @@ def comunicacionIDs():
 			paqueteCambio = paquete_broadcast_ID_ID(2,tamanoTablaPaginas,tamanoTablaNodos,0,0)
 			sock.sendto(paqueteCambio, server_address)
 			huboCambio = 0
+			print (threading.current_thread().name," Actualizando datos")
 		else:
 			paqueteKeepAlive = paquete_broadcast_ID_ID(2,0,0,0,0)
 			sock.sendto(paqueteKeepAlive, server_address)
+			print (threading.current_thread().name," Estoy vivo")
 		time.sleep(2)	
 	sock.close()
 
 def soyPasiva():
-	pass
+	global tablaNodos, tablaPaginas, tamanoTablaNodos, tamanoTablaPaginas
+	
+	socket_pasiva = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	socket_pasiva.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+	socket_pasiva.settimeout(2)
+	server_address = (RED_LAB, PORT_ID_ID)
+	formatoBcast = '=B6sB'
+	
+	socket_pasiva.bind(server_address)
+	
+	
+	estaViva = True
+	while estaViva:
+		try:
+			data, _ = socket_pasiva.recvfrom(BUFFER_SIZE)
+			data = struct.unpack(formatoBcast, data)	
+			
+			if( data[0] == 2): # llego KeepAlive
+				estaViva = True
+				if( data[1] != 0 or data[2] != 0 ): # trae datos
+					filaPaginasCambiadas = data[1]
+					filasNodosCambiadas = data[2]
+					dump1 = data[3]
+					dump2 = data[4]
+					
+					for index in range(filaPaginasCambiadas):
+						tablaPaginas.append([])
+						tablaPaginas[index].append(dump1[index]) # dudoso				
+						tamanoTablaPaginas+=1				
 
-def iniciarHilos():
+					for index in range(filasNodosCambiadas):
+						tablaNodos.append([])
+						tablaNodos[index].append(dump2[index]) # dudoso
+						tamanoTablaNodos+=1
+
+		except:
+			estaViva = False # Despues de esperar dos segundos no llego keepalive, se murio
+			pass
+	
+	
+	socket_pasiva.close()
+	iniciarInterfaz()
+
+
+def iniciarInterfaz():
 	global soy_activa
 
 	champions()
-	print ("Sali champions xd")
 	if(soy_activa):
-		print ("Soy activa")
+		print ("[Principal]  Soy activa")
 		#os.system('ifconfig eth0 down')
 		#os.system('ifconfig eth0 ' + str(IPActiva))
 		#os.system('ifconfig eth0 up')
 		soyActiva()
 	else:
-		print ("Soy pasiva")
+		print ("[Principal]  Soy pasiva")
 		soyPasiva()
 
 
-iniciarHilos()
+iniciarInterfaz()
