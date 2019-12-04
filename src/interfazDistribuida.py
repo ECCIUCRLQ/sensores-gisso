@@ -280,6 +280,8 @@ def escucharML():
 #		2 -> KeepAlive
 		
 def recibir_dump(data):
+	global tablaPaginas, tablaNodos, tamanoTablaPaginas, tamanoTablaNodos
+
 	filaPaginasCambiadas = data[1]
 	filasNodosCambiadas = data[2]
 	dump1 = data[3]
@@ -287,13 +289,16 @@ def recibir_dump(data):
 					
 	for index in range(filaPaginasCambiadas):
 		tablaPaginas.append([])
-		tablaPaginas[index].append(dump1[index]) # dudoso				
+		for jindex in range(2):
+			tablaNodos[tamanoTablaPaginas].append(dump1[index][jindex])			
 		tamanoTablaPaginas+=1				
 
 	for index in range(filasNodosCambiadas):
 		tablaNodos.append([])
-		tablaNodos[index].append(dump2[index]) # dudoso
+		for jindex in range(3):
+			tablaNodos[tamanoTablaNodos].append(dump2[index][jindex])
 		tamanoTablaNodos+=1
+
 
 def chamTimeOut(segundos):
 	global championsTimeOut
@@ -576,7 +581,7 @@ def soyPasiva():
 			# Falta empezar cuenta de dos segundos cuando no se recibe KeepAlive
 			pass
 	
-	
+
 	socket_pasiva.close()
 	iniciarInterfaz()
 
