@@ -250,7 +250,7 @@ def escucharML():
 	
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socketMLocal:
 			socketMLocal.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-			socketMLocal.bind(('', PORT_ID_ML))
+			socketMLocal.bind(('10.1.137.17', PORT_ID_ML))
 			socketMLocal.listen()
 			conn, addr = socketMLocal.accept()##Movi esto 2 lineas mas arriba
 			print("Conectado con: ",addr)
@@ -326,7 +326,7 @@ def champions():
 
 	server_address = (RED_LAB, PORT_ID_ID)
 	formato = '=B6sB'
-	socket_champions.bind(server_address)
+	socket_champions.bind(('10.1.137.17',PORT_ID_ID))
 	hiloTimeOut = threading.Thread(target=chamTimeOut,args=(3,),name='[Timeout]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloTimeOut.start()
 
@@ -412,8 +412,8 @@ def accionHiloPrincipal():
 def accionHiloNodos():
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setblocking(0)
-	server_address = (RED_LAB, PORT_NM_ID)
-	sock.bind(server_address)
+
+	sock.bind(('10.1.137.17', PORT_NM_ID))
 
 	while True:
 		try:
@@ -469,11 +469,13 @@ def responderComando():
 
 def soyActiva():
 
+	hiloKA = threading.Thread(target=comunicacionIDs,name='[KeepAlive]') #Encargado de la comunicacion entre IDs
+	hiloKA.start()
+
 	hiloNodos = threading.Thread(target=accionHiloNodos,name="[Broadcast]") # Encargado de escuchar broadcasts de los nodos
 	hiloNodos.start()
 
-	hiloKA = threading.Thread(target=comunicacionIDs,name='[KeepAlive]') #Encargado de la comunicacion entre IDs
-	hiloKA.start()
+	
 
 	hiloPrincipal = threading.Thread(target=accionHiloPrincipal,name='[Principal]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloPrincipal.start()
@@ -552,9 +554,9 @@ def comunicacionIDs():
 	global huboCambio, tamanoTablaPaginas, tamanoTablaNodos
 	sock_comunicacion = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock_comunicacion.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-
+	sock_comunicacion.setblocking(0)
 	server_address = (RED_LAB, PORT_ID_ID)
-	sock_comunicacion.bind(server_address)
+	sock_comunicacion.bind(('10.1.137.17', PORT_ID_ID))
 
 	huboCambio = 0
 
@@ -601,11 +603,8 @@ def soyPasiva():
 	socket_pasiva.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	socket_pasiva.setblocking(0)
 
-	server_address = (RED_LAB, PORT_ID_ID)
 
-	
-
-	socket_pasiva.bind(server_address)
+	socket_pasiva.bind(('10.1.137.17', PORT_ID_ID))
 	
 	contadorNoLlego = 0
 	while activaViva:
