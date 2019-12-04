@@ -25,6 +25,7 @@ soy_pasiva = False
 hay_activa = False
 
 activaViva = True
+siLlego = False
 huboCambio = 0
 championsTimeOut = 0
 
@@ -366,7 +367,7 @@ def champions():
 	else:
 		paquete_bcast = struct.pack(formatoBcast,0, mi_mac,ronda_champions)
 		socket_champions.sendto(paquete_bcast, server_address) ### Revisar esto
-		hiloTimeOut = threading.Thread(target=chamTimeOut,args=(1,),name='[TimeOut]') 
+		hiloTimeOut = threading.Thread(target=chamTimeOut,args=(1,),name='[Timeout]') 
 		hiloTimeOut.start()
 		while (championsTimeOut == 0 and recibido == 0 and soy_pasiva == True):
 			try:
@@ -533,46 +534,47 @@ def crearDump(huboCambio):
 
 def comunicacionIDs():
 	global huboCambio, tamanoTablaPaginas, tamanoTablaNodos
-	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	sock_comunicacion = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-	sock.setblocking(0)
+	sock_comunicacion.setblocking(0)
 	server_address = (RED_LAB, PORT_ID_ID)
-	sock.bind(server_address)
+	sock_comunicacion.bind(server_address)
 
 	while True:
 		try:
-			data, address = sock.recvfrom(BUFFER_SIZE)
+			data, address = sock_comunicacion.recvfrom(BUFFER_SIZE)
 			if(data[0] == 0): # Recibir yo quiero ser activa cuando soy activa
 				data = struct.unpack(formatoBcast, data)
 				dump1, dump2 = crearDump(0)
 				paqueteDump = paquete_broadcast_ID_ID(1,tamanoTablaPaginas, tamanoTablaNodos, dump1, dump2)
-				sock.sendto(paqueteDump, address)
+				sock_comunicacion.sendto(paqueteDump, address)
 		except:
 			print (threading.current_thread().name," Escuchando IDs nuevas")
 
 		if(huboCambio == 1):
 			dump1, dump2 = crearDump(huboCambio)
 			paqueteCambio = paquete_broadcast_ID_ID(2,contadorCambiosPagina,contadorCambiosNodo,dump1,dump2)
-			sock.sendto(paqueteCambio, server_address)
+			sock_comunicacion.sendto(paqueteCambio, server_address)
 			huboCambio = 0
 			print (threading.current_thread().name," Actualizando datos")
 		else:
 			paqueteKeepAlive = paquete_broadcast_ID_ID(2,0,0,0,0)
-			sock.sendto(paqueteKeepAlive, server_address)
+			sock_comunicacion.sendto(paqueteKeepAlive, server_address)
 			print (threading.current_thread().name," Estoy vivo")
 		time.sleep(1)	
-	sock.close()
+	sock_comunicacion.close()
 
 def pasivaTimeout(segundos):
 	global activaViva
 
 	print(threading.current_thread().name," Empieza KA Timeout")
 	time.sleep(segundos)
-	activaViva = False
+	if not(siLlego):
+		activaViva = False
 	print(threading.current_thread().name," Fin KA Timeout")
 
 def soyPasiva():
-	global tablaNodos, tablaPaginas, tamanoTablaNodos, tamanoTablaPaginas, activaViva
+	global tablaNodos, tablaPaginas, tamanoTablaNodos, tamanoTablaPaginas, activaViva, siLlego
 	
 	socket_pasiva = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	socket_pasiva.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -582,24 +584,24 @@ def soyPasiva():
 	formatoBcast = '=B6sB'
 	
 	socket_pasiva.bind(server_address)
-	#	hiloTimeout = threading.Thread(target=pasivaTimeout,args=(2,),name='[KA Timeout]')
-	#	hiloTimeout.start() 
+	
+	hiloTimeout = threading.Thread(target=pasivaTimeout,args=(2,),name='[KA Timeout]')
+
 	while activaViva:
 		try:
-			socket_pasiva.settimeout(2)
 			data, _ = socket_pasiva.recvfrom(BUFFER_SIZE)
 			data = struct.unpack(formatoBcast, data)	
 			
 			if( data[0] == 2): # llego KeepAlive
-				activaViva = True
+				siLlego = True
 				if( data[1] != 0 or data[2] != 0 ): # trae datos
 					recibir_dump(data)
 
 		except:
+			if (siLlego):
+				hiloTimeout.start() 
+			siLlego = False
 			time.sleep(1)
-			
-			#TODO Falta empezar cuenta de dos segundos cuando no se recibe KeepAlive
-			pass
 	
 
 	socket_pasiva.close()
