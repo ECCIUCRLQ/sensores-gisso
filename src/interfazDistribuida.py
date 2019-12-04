@@ -279,11 +279,21 @@ def escucharML():
 #		1 -> Soy activa
 #		2 -> KeepAlive
 		
-def recibir_dump(tabla):
-	pass
+def recibir_dump(data):
+	filaPaginasCambiadas = data[1]
+	filasNodosCambiadas = data[2]
+	dump1 = data[3]
+	dump2 = data[4]
+					
+	for index in range(filaPaginasCambiadas):
+		tablaPaginas.append([])
+		tablaPaginas[index].append(dump1[index]) # dudoso				
+		tamanoTablaPaginas+=1				
 
-def recibir_parte(data):
-	pass
+	for index in range(filasNodosCambiadas):
+		tablaNodos.append([])
+		tablaNodos[index].append(dump2[index]) # dudoso
+		tamanoTablaNodos+=1
 
 def chamTimeOut(segundos):
 	global championsTimeOut
@@ -339,7 +349,6 @@ def champions():
 						elif(data[2] > ronda_champions):
 							soy_pasiva = True
 							ronda_champions = 3
-
 				except:
 					pass
 			recibido = 0
@@ -514,7 +523,7 @@ def comunicacionIDs():
 				paqueteDump = paquete_broadcast_ID_ID(1,tamanoTablaPaginas, tamanoTablaNodos, dump1, dump2)
 				sock.sendto(paqueteDump, address)
 		except:
-			print (threading.current_thread().name," Escuchando IDS nuevas")
+			print (threading.current_thread().name," Escuchando IDs nuevas")
 
 		if(huboCambio == 1):
 			dump1, dump2 = crearDump(huboCambio)
@@ -548,8 +557,6 @@ def soyPasiva():
 	formatoBcast = '=B6sB'
 	
 	socket_pasiva.bind(server_address)
-	
-
 #	hiloTimeout = threading.Thread(target=pasivaTimeout,args=(2,),name='[KA Timeout]')
 #	hiloTimeout.start() 
 	while activaViva:
@@ -561,20 +568,7 @@ def soyPasiva():
 			if( data[0] == 2): # llego KeepAlive
 				activaViva = True
 				if( data[1] != 0 or data[2] != 0 ): # trae datos
-					filaPaginasCambiadas = data[1]
-					filasNodosCambiadas = data[2]
-					dump1 = data[3]
-					dump2 = data[4]
-					
-					for index in range(filaPaginasCambiadas):
-						tablaPaginas.append([])
-						tablaPaginas[index].append(dump1[index]) # dudoso				
-						tamanoTablaPaginas+=1				
-
-					for index in range(filasNodosCambiadas):
-						tablaNodos.append([])
-						tablaNodos[index].append(dump2[index]) # dudoso
-						tamanoTablaNodos+=1
+					recibir_dump(data)
 
 		except:
 			time.sleep(1)
