@@ -22,6 +22,12 @@ soy_pasiva = False
 hay_activa = False
 huboCambio = 0
 championsTimeOut = 0
+contadorCambiosPagina = 0
+cambiosPagina = []
+
+contadorCambiosNodo = 0
+cambiosNodo = []
+
 # IPs
 RED_LAB = '127.0.0.1'
 IPActiva = '127.0.0.1'
@@ -99,7 +105,7 @@ def buscarIP(ipNodo):
 	return tengo
 
 def agregarNodoTabla(ipNodo, espacioNodo):
-	global numeroNodo,tablaNodos,tamanoTablaNodos
+	global numeroNodo,tablaNodos,tamanoTablaNodos, cambiosNodo
 	
 	if not ( buscarIP(ipNodo) ):
 		tablaNodos.append([])
@@ -140,7 +146,7 @@ def buscaNodo (numeroNodo):
 	return indiceNodo
 
 def actualizarDatos(indiceNodo, id_pagina, espacioDisponibleRecibido, numeroNodo):
-	global tablaNodos, tablaPaginas, tamanoTablaPaginas
+	global tablaNodos, tablaPaginas, tamanoTablaPaginas, tablaPaginas
 
 	tablaNodos[indiceNodo][2] = espacioDisponibleRecibido
 	
@@ -286,7 +292,7 @@ def chamTimeOut(segundos):
 	championsTimeOut = 1
 
 def champions():
-	global quieren_pelea, mi_mac, ronda_champions, soy_activa, hay_activa championsTimeOut, soy_pasiva
+	global quieren_pelea, mi_mac, ronda_champions, soy_activa, hay_activa, championsTimeOut, soy_pasiva
 	mi_mac = getMAC().to_bytes(6,'little')
 	recibido = 0
 
@@ -425,23 +431,70 @@ def responderComando():
 
 def soyActiva():
 
-	comunicacionIDs()
+	hiloKA = threading.Thread(target=comunicacionIDs,name='[KeepAlive]') #Encargado de la comunicacion entre IDs
+	hiloKA.start()
 
-	hiloNodos = threading.Thread(target=accionHiloPrincipal,name='[Principal]') #Encargado de comunicar Local con Nodos y viceversa
-	hiloNodos.start()
-	
-	hiloPrincipal = threading.Thread(target=accionHiloNodos,name="[Broadcast]") # Encargado de escuchar broadcasts de los nodos
+	hiloPrincipal = threading.Thread(target=accionHiloPrincipal,name='[Principal]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloPrincipal.start()
+	
+	hiloNodos = threading.Thread(target=accionHiloNodos,name="[Broadcast]") # Encargado de escuchar broadcasts de los nodos
+	hiloNodos.start()
 
-def crearDump():
-	return 0
+def paquete_broadcast_ID_ID(op_code, fila1, fila2, dump1, dump2):
+	if (fila1 or fila2 > 0): # Hay Cambios
+		formato = '=BBB'
 
-def crearPaqueteCambio():
-	return 0
+		paquete = struct.pack(formato, op_code, fila1, fila2)
+		paquete+=dump1
+		paquete+=dump2
+
+		return paquete
+		
+	else: # No hay cambios
+		formato = '=BBB'
+		
+		paquete = struct.pack(formato, op_code, fila1,fila2)
+
+		return paquete
+
+
+
+def crearDump(huboCambio):
+	global tamanoTablaNodos, tamanoTablaPaginas, tablaPaginas, tablaNodos
+
+	dump1 = bytearray()
+	dump2 = bytearray()
+
+	for page in tablaPaginas:
+		if huboCambio == 1: # con cambio
+			pass
+		else:
+			dump1.append(page)
+			dump1.append(tablaPaginas[page])
+
+	for node in tablaNodos:
+		if huboCambio == 1: #cambios
+			pass
+		else:
+			dump2.append(node)
+			
+			data = tablaNodos[node]
+
+			ipNodo = struct.pack("I", data[0])
+			tamanoNodo = struct.pack("I", data[1])
+
+			for i in range(4):
+				dump2.append(ipNodo[i])
+
+			for i in range(4):
+				dump2.append(tamanoNodo[i])	
+	
+	return dump1, dump2	
 
 def comunicacionIDs():
-	global huboCambio
+	global huboCambio, tamanoTablaPaginas, tamanoTablaNodos
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
 	sock.setblocking(0)
 	server_address = (RED_LAB, PORT_ID_ID)
 	sock.bind(server_address)
@@ -449,21 +502,21 @@ def comunicacionIDs():
 	while True:
 		try:
 			data, address = sock.recvfrom(BUFFER_SIZE)
-			if(data[0] == 0):
+			if(data[0] == 0): # Recibir yo quiero ser activa cuando soy activa
 				data = struct.unpack(formatoBcast, data)
-				filas1 = struct.unpack("=B", data[1:2])[0]
-				
-				paqueteDump = crearDump()
+				dump1, dump2 = crearDump(0)
+				paqueteDump = paquete_broadcast_ID_ID(1,tamanoTablaPaginas, tamanoTablaNodos, dump1, dump2)
 				sock.sendto(paqueteDump, address)
 		except:
 			print (threading.current_thread().name," Escuchando IDS nuevas")
 
 		if(huboCambio == 1):
-			paqueteCambio = crearPaqueteCambio()
+			dump1, dump2 = crearDump(huboCambio)
+			paqueteCambio = paquete_broadcast_ID_ID(2,tamanoTablaPaginas,tamanoTablaNodos,0,0)
 			sock.sendto(paqueteCambio, server_address)
 			huboCambio = 0
 		else:
-			paqueteKeepAlive = struct.pack('=BB',2,0)
+			paqueteKeepAlive = paquete_broadcast_ID_ID(2,0,0,0,0)
 			sock.sendto(paqueteKeepAlive, server_address)
 		time.sleep(2)	
 	sock.close()
