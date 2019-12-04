@@ -323,11 +323,12 @@ def champions():
 	server_address = (RED_LAB, PORT_ID_ID)
 	formato = '=B6sB'
 	socket_champions.bind(server_address)
-	hiloTimeOut = threading.Thread(target=chamTimeOut,args=(3,),name='[Timeout]') #Encargado de comunicar Local con Nodos y viceversa
+	hiloTimeOut = threading.Thread(target=chamTimeOut,args=(3,),name='[TimeOut]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloTimeOut.start()
 
 	mio = 0
 
+	print ("antes del juail")
 	while championsTimeOut==0 and soy_pasiva == False:
 		if not(soy_pasiva):
 			if(mio == 0):
@@ -402,7 +403,6 @@ def champions():
 		dump1, dump2 = crearDump(huboCambio)
 		paqueteCambio = paquete_broadcast_ID_ID(2,tamanoTablaPaginas,tamanoTablaNodos,dump1,dump2)
 		socket_champions.sendto(paqueteCambio, server_address)
-
 
 	socket_champions.close()
 
