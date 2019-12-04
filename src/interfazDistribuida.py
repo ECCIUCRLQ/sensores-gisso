@@ -27,6 +27,7 @@ hay_activa = False
 activaViva = True
 huboCambio = 0
 championsTimeOut = 0
+
 contadorCambiosPagina = 0
 cambiosPagina = []
 
@@ -481,24 +482,40 @@ def paquete_broadcast_ID_ID(op_code, fila1, fila2, dump1, dump2):
 
 def crearDump(huboCambio):
 	global tamanoTablaNodos, tamanoTablaPaginas, tablaPaginas, tablaNodos
+	global contadorCambiosNodo, contadorCambiosPagina, cambiosNodo, cambiosPagina
 
 	dump1 = bytearray()
 	dump2 = bytearray()
 
-	for page in tablaPaginas:
+	for pagina in tablaPaginas:
 		if huboCambio == 1: # con cambio
-			pass
+			for paginasCambiadas in cambiosPagina:
+				if pagina == paginasCambiadas:
+					dump1.append(pagina)
+					dump1.append(tablaPaginas[pagina])
 		else:
-			dump1.append(page)
-			dump1.append(tablaPaginas[page])
+			dump1.append(pagina)
+			dump1.append(tablaPaginas[pagina])
 
-	for node in tablaNodos:
+	for nodo in tablaNodos:
 		if huboCambio == 1: #cambios
-			pass
+			for nodoCambio in cambiosNodo:
+				if nodoCambio == nodo:
+					dump2.append(nodo)
+					data = tablaNodos[nodo]
+
+					ipNodo = struct.pack("I", data[0])
+					tamanoNodo = struct.pack("I", data[1])
+
+					for i in range(4):
+						dump2.append(ipNodo[i])
+
+					for i in range(4):
+						dump2.append(tamanoNodo[i])
 		else:
-			dump2.append(node)
+			dump2.append(nodo)
 			
-			data = tablaNodos[node]
+			data = tablaNodos[nodo]
 
 			ipNodo = struct.pack("I", data[0])
 			tamanoNodo = struct.pack("I", data[1])
@@ -562,8 +579,8 @@ def soyPasiva():
 	formatoBcast = '=B6sB'
 	
 	socket_pasiva.bind(server_address)
-#	hiloTimeout = threading.Thread(target=pasivaTimeout,args=(2,),name='[KA Timeout]')
-#	hiloTimeout.start() 
+	#	hiloTimeout = threading.Thread(target=pasivaTimeout,args=(2,),name='[KA Timeout]')
+	#	hiloTimeout.start() 
 	while activaViva:
 		try:
 			socket_pasiva.settimeout(2)
@@ -584,7 +601,6 @@ def soyPasiva():
 
 	socket_pasiva.close()
 	iniciarInterfaz()
-
 
 def iniciarInterfaz():
 	global soy_activa
