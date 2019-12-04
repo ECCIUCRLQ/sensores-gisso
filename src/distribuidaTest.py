@@ -57,7 +57,7 @@ def sendTCP(paquete, IP_Nodo):
 			try:
 				socket_send.connect((IP_Nodo, PORT_NM))
 				socket_send.sendall(paquete)
-				data, address = socket_send.recvfrom(BUFFER_SIZE)
+				data, _ = socket_send.recvfrom(BUFFER_SIZE)
 				if(data[0] == 2):
 					print("Recibido correctamente")
 					socket_send.close()
@@ -73,7 +73,7 @@ def pedirTCP(paquete, IP_Nodo):
 			try:
 				socket_pedir.connect((IP_Nodo, PORT_NM))
 				socket_pedir.sendall(paquete)
-				data, address = socket_pedir.recvfrom(BUFFER_SIZE)
+				data, _ = socket_pedir.recvfrom(BUFFER_SIZE)
 				if(data[0] == 3):
 					print("Se recibieron los datos que pedi correctamente")
 					socket_pedir.close()
@@ -88,9 +88,9 @@ def getMAC():
 
 
 def add_tabla_nodo(IP_Nodo, espacio_disponible):
-	global nodo_id,tabla_nodos, pos_tabla_nodos
+	global nodo_id,tabla_nodos_espacio, pos_tabla_nodos
 	
-	tabla_nodos.append([])
+	tabla_nodos_espacio.append([])
 	
 	tabla_nodos_espacio[pos_tabla_nodos].append(nodo_id)
 	tabla_nodos_espacio[pos_tabla_nodos].append(IP_Nodo)
@@ -104,6 +104,7 @@ def send_tabla_dump(tabla_nodos):
 	pass # Aqui se envia por broadcast toda la tabla de nodos
 	
 def registerNodeBC():
+	global IP_Nodo
 	sock_broadcast = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock_broadcast.setblocking(0)
 	server_address = ('', PUERTO_BC)
@@ -152,8 +153,8 @@ def enviarQuieroSer():
 	paquete_bcast = struct.pack('=BIB',quiero_ser_activa, my_mac,ronda_champions)
 	try:
 		print('Enviar quiero ser Activa')
-		sent = sock_quiero.sendto(paquete_bcast, server_address)
-		data, address = sock_quiero.recvfrom(BUFFER_SIZE)
+		sock_quiero.sendto(paquete_bcast, server_address)
+		data, _ = sock_quiero.recvfrom(BUFFER_SIZE)
 		data_bcast = struct.unpack(formato_champions, data)
 		que_quiere = data_bcast[0] 
 		mac_contrincante = data_bcast[1] 
@@ -194,9 +195,10 @@ def actualizar_datos(data):
 def main():
 		
 	thread_bcast = threading.Thread(target = registerNodeBC)
-	#thread_bcast.start()
+	thread_bcast.start()
 	registerNodeBC()
 	thread_champions = threading.Thread(target = enviarQuieroSer)
+	thread_champions.start()
 	print ("MAC", getMAC())
 """
 	paquete = crearPaquete(1)
