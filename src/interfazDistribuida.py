@@ -385,6 +385,32 @@ def soyActiva():
 	hiloPrincipal = threading.Thread(target=accionHiloNodos,name="[Broadcast]") # Encargado de escuchar broadcasts de los nodos
 	hiloPrincipal.start()
 
+def comIds():
+	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	sock.setblocking(0)
+	server_address = (RED_LAB, PORT_ID_ID)
+	sock.bind(server_address)
+
+	while True:
+		try:
+			data, address = sock.recvfrom(BUFFER_SIZE)
+			if(data[0] == 0):
+				data = struct.unpack(formatoBcast, data)
+				filas1 = struct.unpack("=B", data[1:2])[0]
+				paqueteDump = crearDump();
+				sock.sendto(paqueteDump, address)
+		except:
+			print (threading.current_thread().name," Escuchando IDS nuevas")
+
+		if(huboCambio = 1):
+			paqueteCambio = crearPaqueteCambio()
+			sock.sendto(paqueteCambio, server_address)
+		else:
+			paqueteKeepAlive = struct.pack('=BB',2,0)
+			sock.sendto(paqueteKeepAlive, server_address)
+			
+	sock.close()
+
 def iniciarHilos():
 	global soyActiva
 
