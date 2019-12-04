@@ -1,3 +1,5 @@
+# coding: utf8
+
 import struct
 import random
 import socket
@@ -6,6 +8,7 @@ import signal
 import time
 import sys
 import uuid 
+import os
 
 # Variables Globales
 tablaNodos = [] 			# Columnas: NumeroNodo | IP | EspacioDisponible
@@ -30,9 +33,10 @@ cambiosNodo = []
 
 # IPs
 RED_LAB = '127.0.0.1'
-IPActiva = '127.0.0.1'
+IPActiva = '192.168.1.50'
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 IP_ML = ''
+
 # Cromas
 PORT_NM_ID = 6000
 PORT_ID_ML = 2000
@@ -272,14 +276,7 @@ def escucharML():
 	#		0 -> Quiero ser
 	#		1 -> Soy activa
 	#		2 -> KeepAlive
-	
-def perdi_pelea():
-
-	while True:
-		pass
-		# me quedo escuchando broadcast
-		# break cuando muere keepalive
-	
+		
 def recibir_dump(tabla):
 	pass
 
@@ -287,12 +284,12 @@ def recibir_parte(data):
 	pass
 
 def chamTimeOut(segundos):
-	global chamTimeOut
+	global championsTimeOut
 	time.sleep(segundos)
 	championsTimeOut = 1
 
 def champions():
-	global quieren_pelea, mi_mac, ronda_champions, soy_activa, hay_activa, championsTimeOut, soy_pasiva
+	global quieren_pelea, mi_mac, ronda_champions, soy_activa, hay_activa, championsTimeOut, soy_pasiva, huboCambio
 	mi_mac = getMAC().to_bytes(6,'little')
 	recibido = 0
 
@@ -306,18 +303,21 @@ def champions():
 	hiloTimeOut = threading.Thread(target=chamTimeOut,args=(3,),name='[TimeOut]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloTimeOut.start()
 
+
+	print ("antes del juail")
 	while championsTimeOut==0 and soy_pasiva == False:
-		if not(hay_activa):
+		if not(soy_pasiva):
 			paquete_bcast = struct.pack(formatoBcast,0, mi_mac,ronda_champions)
 			socket_champions.sendto(paquete_bcast, server_address)
 			while championsTimeOut==0 and recibido == 0:	
 				try:
-					data, address = socket_champions.recvfrom(BUFFER_SIZE)			
+					data, _ = socket_champions.recvfrom(BUFFER_SIZE)			
 					data = struct.unpack(formatoBcast, data)
 					
 					if(data[0] == 1):
 						recibido = 1
-						hay_activa = True
+						print ("Primer if")
+						soy_pasiva = True
 						recibir_dump(data) # TODO = Falta implementar
 
 					elif(data[0] == 0): # OpCode es yo quiero
@@ -326,23 +326,21 @@ def champions():
 							if( mi_mac > data[1]):
 								ronda_champions+=1
 							else:	
+								print ("Segundo if")
 								soy_pasiva = True
 								ronda_champions = 3
 						elif(data[2] > ronda_champions):
+							print ("Tercer if")
 							soy_pasiva = True
 							ronda_champions = 3
 
 				except:
 					pass
 			recibido = 0
-
-		else:
-			pass
 	
 	championsTimeOut = 0
 	if(soy_pasiva==True):
 		pass
-	
 	else:
 		paquete_bcast = struct.pack(formatoBcast,0, mi_mac,ronda_champions)
 		socket_champions.sendto(paquete_bcast, server_address) ### Revisar esto
@@ -350,7 +348,7 @@ def champions():
 		hiloTimeOut.start()
 		while (championsTimeOut == 0 and recibido == 0 and soy_pasiva == True):
 			try:
-				data, address = sock.recvfrom(BUFFER_SIZE)
+				data, _ = socket_champions.recvfrom(BUFFER_SIZE)
 				
 				if(data[0] == 0 and data[2]==ronda_champions): ##Revisar el paquete si es el que espero comparar Macs y revisar
 					recibido = 1
@@ -359,11 +357,18 @@ def champions():
 					
 			except:
 				pass
-
+	
+	print ("despues del juail")
+	
 	if(soy_pasiva == True):
+		print ("inside")
 		pass
 	else:
+		print ("en el else")
 		soy_activa = True
+		dump1, dump2 = crearDump(huboCambio)
+		paqueteCambio = paquete_broadcast_ID_ID(2,tamanoTablaPaginas,tamanoTablaNodos,dump1,dump2)
+		socket_champions.sendto(paqueteCambio, server_address)
 
 	socket_champions.close()
 
@@ -457,8 +462,6 @@ def paquete_broadcast_ID_ID(op_code, fila1, fila2, dump1, dump2):
 
 		return paquete
 
-
-
 def crearDump(huboCambio):
 	global tamanoTablaNodos, tamanoTablaPaginas, tablaPaginas, tablaNodos
 
@@ -521,21 +524,23 @@ def comunicacionIDs():
 		time.sleep(2)	
 	sock.close()
 
-def iniciarHilos():
-	global soyActiva
+def soyPasiva():
+	pass
 
-	#hiloInput = threading.Thread(target=responderComando,name="INPUT") # Hilo extra para debugeo
-	#hiloInput.start()
-	soyActiva()
-	#accionHiloPrincipal()
-	#hiloPelea = threading.Thread(target=champions,name='[Champions]') # encargado de 
-	#hiloPelea.start()
-	#while True:
-	#	if(soyActiva):
-	#		soyActiva()
+def iniciarHilos():
+	global soy_activa
+
+	champions()
+	print ("Sali champions xd")
+	if(soy_activa):
+		print ("Soy activa")
+		#os.system('ifconfig eth0 down')
+		#os.system('ifconfig eth0 ' + str(IPActiva))
+		#os.system('ifconfig eth0 up')
+		soyActiva()
+	else:
+		print ("Soy pasiva")
+		soyPasiva()
+
 
 iniciarHilos()
-
-
-
-	
