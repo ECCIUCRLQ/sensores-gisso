@@ -322,11 +322,12 @@ def champions():
 	server_address = (RED_LAB, PORT_ID_ID)
 	formatoBcast = '=B6sB'
 	socket_champions.bind(server_address)
-	hiloTimeOut = threading.Thread(target=chamTimeOut,args=(3,),name='[Timeout]') #Encargado de comunicar Local con Nodos y viceversa
+	hiloTimeOut = threading.Thread(target=chamTimeOut,args=(3,),name='[TimeOut]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloTimeOut.start()
 
 	mio = 0
 
+	print ("antes del juail")
 	while championsTimeOut==0 and soy_pasiva == False:
 		if not(soy_pasiva):
 			if(mio == 0):
@@ -341,25 +342,25 @@ def champions():
 						mio = 1
 
 					elif(data[0] == 1):
-						print("[Champions]  Recibí un soy activo cuando mandé soy pasivo")
 						recibido = 1
+						print ("Primer if")
 						soy_pasiva = True
-						recibir_dump(data) 
+						recibir_dump(data) # TODO = Falta implementar
 
 					elif(data[0] == 0): # OpCode es yo quiero
 						recibido = 1
 						if(data[2] == ronda_champions): # Comparo ronda
 							if( mi_mac > data[1]):
-								print("[Champions]  Gané 1v1: ",mi_mac, data[1])
 								ronda_champions+=1
 							else:	
-								print("[Champions]  Perdí 1v1",mi_mac, data[1])
+								print ("Segundo if")
 								soy_pasiva = True
 								ronda_champions = 3
 						elif(data[2] > ronda_champions):
-							print("[Champions]  Recibí ronda mayor a la mia",ronda_champions, data[2])
+							print ("Tercer if")
 							soy_pasiva = True
 							ronda_champions = 3
+
 				except:
 					pass
 			recibido = 0
@@ -371,7 +372,7 @@ def champions():
 	else:
 		paquete_bcast = struct.pack(formatoBcast,0, mi_mac,ronda_champions)
 		socket_champions.sendto(paquete_bcast, server_address) ### Revisar esto
-		hiloTimeOut = threading.Thread(target=chamTimeOut,args=(1,),name='[Timeout]') 
+		hiloTimeOut = threading.Thread(target=chamTimeOut,args=(1,),name='[TimeOut]') 
 		hiloTimeOut.start()
 		while (championsTimeOut == 0 and recibido == 0 and soy_pasiva == True):
 			try:
@@ -385,13 +386,17 @@ def champions():
 			except:
 				pass
 	
+	print ("despues del juail")
 	
-	if not (soy_pasiva):
+	if(soy_pasiva == True):
+		print ("inside")
+		pass
+	else:
+		print ("en el else")
 		soy_activa = True
 		dump1, dump2 = crearDump(huboCambio)
 		paqueteCambio = paquete_broadcast_ID_ID(2,tamanoTablaPaginas,tamanoTablaNodos,dump1,dump2)
 		socket_champions.sendto(paqueteCambio, server_address)
-		
 
 	socket_champions.close()
 
