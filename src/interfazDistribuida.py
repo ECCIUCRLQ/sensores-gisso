@@ -311,7 +311,7 @@ def chamTimeOut(segundos):
 	print(threading.current_thread().name," Fin Timeout")
 
 def champions():
-	global quieren_pelea, mi_mac, ronda_champions, soy_activa, hay_activa, championsTimeOut, soy_pasiva, huboCambio
+	global quieren_pelea, mi_mac, ronda_champions, soy_activa, championsTimeOut, soy_pasiva
 	mi_mac = getMAC().to_bytes(6,'little')
 	recibido = 0
 
@@ -327,29 +327,24 @@ def champions():
 	hiloTimeOut.start()
 
 	mio = 0
+	ronda_champions = 0
 
-	print ("antes del juail")
 	while championsTimeOut==0 and soy_pasiva == False:
 		if not(soy_pasiva):
 			if(mio == 0):
 				paquete_bcast = struct.pack(formato,0, mi_mac,ronda_champions)
 				_sent = socket_champions.sendto(paquete_bcast, server_address)
-				print("Envio mensaje", _sent)
 
 			while championsTimeOut==0 and recibido == 0:	
 				try:
-					
 					data, _address = socket_champions.recvfrom(BUFFER_SIZE)
-					print("Esperando datos",data)
 					if( data != 0):	
-						data = struct.unpack(formatoBcast, data)
-						print(">>>Recibí mensajes", data)		
+						data = struct.unpack(formato, data)		
 						if not(data[1] == mi_mac):
-							print("Recibi alguien mas")
-							
+
 							if(data[0] == 1):
 								recibido = 1
-								print ("Primer if")
+								print("[Champions]  Recibí yo soy activa")
 								soy_pasiva = True
 								recibir_dump(data) # Falta implementar
 
@@ -357,13 +352,14 @@ def champions():
 								recibido = 1
 								if(data[2] == ronda_champions): # Comparo ronda
 									if( mi_mac > data[1]):
+										print("[Champions]  Gané en ronda: ",ronda_champions)
 										ronda_champions+=1
 									else:	
-										print ("Segundo if")
+										print("[Champions]  Perdí en ronda",ronda_champions)
 										soy_pasiva = True
 										ronda_champions = 3
 								elif(data[2] > ronda_champions):
-									print ("Tercer if")
+									print("[Champions]  Voy atrasado")
 									soy_pasiva = True
 									ronda_champions = 3
 						else:
@@ -377,9 +373,7 @@ def champions():
 		mio = 0
 		
 	championsTimeOut = 0
-	if(soy_pasiva==True):
-		pass
-	else:
+	if not(soy_pasiva):
 		paquete_bcast = struct.pack(formato,0, mi_mac,ronda_champions)
 		socket_champions.sendto(paquete_bcast, server_address) ### Revisar esto
 		hiloTimeOut = threading.Thread(target=chamTimeOut,args=(1,),name='[TimeOut]') 
@@ -391,16 +385,17 @@ def champions():
 				if(data[0] == 0 and data[2]==ronda_champions): ##Revisar el paquete si es el que espero comparar Macs y revisar
 					recibido = 1
 					if(data[1] > mi_mac):
+						print("[Champions]  Gané en tiempos extra",ronda_champions)
 						soy_pasiva = True
 					
 			except:
 				pass
 	
-	print ("despues del juail")
-	
+
 	if not(soy_pasiva):
+		print("[Champions]  Gané todo, soy activa")
 		soy_activa = True
-		dump1, dump2 = crearDump(huboCambio)
+		dump1, dump2 = crearDump(0)
 		paqueteCambio = paquete_broadcast_ID_ID(2,tamanoTablaPaginas,tamanoTablaNodos,dump1,dump2)
 		socket_champions.sendto(paqueteCambio, server_address)
 
@@ -454,7 +449,6 @@ def printPaginas(tablaPaginas, tamanoTablaPaginas):
 	print("==============\n")	
 
 def getMAC():
-	print("MI MAC", uuid.getnode()  )
 	return uuid.getnode() 	
 
 def responderComando():
