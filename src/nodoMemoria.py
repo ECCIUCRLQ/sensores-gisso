@@ -18,7 +18,7 @@ punteroDatos = 4
 IDIP = 0
 
 BUFFER_SIZE = 692000
-PORT_NM_ID = 6000
+PORT_NM_ID = 8000
 
 sendBcast = 0
 
@@ -138,7 +138,7 @@ def broadcast():
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	
-	server_address = ('127.0.0.1', PORT_NM_ID)
+	server_address = ('10.1.255.255', PORT_NM_ID)
 
 	paqueteBcast = struct.pack('=BI',5,tamanoDisponible)
 	try:
@@ -158,7 +158,7 @@ def recibirTCP():
 	PORT = 3114        # Port to listen on (non-privileged ports are > 1023)
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
 		s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-		s.bind(('127.0.0.1', PORT))
+		s.bind(('10.1.137.32', PORT))
 		s.listen()
 		while True:
 			conn, addr = s.accept()

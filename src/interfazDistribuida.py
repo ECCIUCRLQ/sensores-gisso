@@ -36,16 +36,16 @@ contadorCambiosNodo = 0
 cambiosNodo = []
 
 # IPs
-RED_LAB = '127.0.0.1'
+RED_LAB = '10.1.255.255'
 IPActiva = '192.168.1.50'
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 IP_ML = ''
 
 # Cromas
-PORT_NM_ID = 6000
+PORT_NM_ID = 8000
 PORT_ID_ML = 2000
 PORT_ID_NM = 3114
-PORT_ID_ID = 6666
+PORT_ID_ID = 6669
 BUFFER_SIZE = 692000
 
 # Formatos
@@ -317,10 +317,11 @@ def champions():
 
 	socket_champions = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	socket_champions.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+	socket_champions.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	socket_champions.setblocking(0)
 
 	server_address = (RED_LAB, PORT_ID_ID)
-	formatoBcast = '=B6sB'
+	formato = '=B6sB'
 	socket_champions.bind(server_address)
 	hiloTimeOut = threading.Thread(target=chamTimeOut,args=(3,),name='[Timeout]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloTimeOut.start()
@@ -330,38 +331,47 @@ def champions():
 	while championsTimeOut==0 and soy_pasiva == False:
 		if not(soy_pasiva):
 			if(mio == 0):
-				paquete_bcast = struct.pack(formatoBcast,0, mi_mac,ronda_champions)
-				socket_champions.sendto(paquete_bcast, server_address)
+				paquete_bcast = struct.pack(formato,0, mi_mac,ronda_champions)
+				_sent = socket_champions.sendto(paquete_bcast, server_address)
+				print("Envio mensaje", _sent)
 
 			while championsTimeOut==0 and recibido == 0:	
 				try:
-					data, _ = socket_champions.recvfrom(BUFFER_SIZE)			
-					data = struct.unpack(formatoBcast, data)
-					if(data[1] == mi_mac):
-						mio = 1
-
-					elif(data[0] == 1):
-						print("[Champions]  Recibí un soy activo cuando mandé soy pasivo")
-						recibido = 1
-						soy_pasiva = True
-						recibir_dump(data) 
-
-					elif(data[0] == 0): # OpCode es yo quiero
-						recibido = 1
-						if(data[2] == ronda_champions): # Comparo ronda
-							if( mi_mac > data[1]):
-								print("[Champions]  Gané 1v1: ",mi_mac, data[1])
-								ronda_champions+=1
-							else:	
-								print("[Champions]  Perdí 1v1",mi_mac, data[1])
+					
+					data, _address = socket_champions.recvfrom(BUFFER_SIZE)
+					print("Esperando datos",data)
+					if( data != 0):	
+						data = struct.unpack(formatoBcast, data)
+						print(">>>Recibí mensajes", data)		
+						if not(data[1] == mi_mac):
+							print("Recibi alguien mas")
+							
+							if(data[0] == 1):
+								recibido = 1
+								print ("Primer if")
 								soy_pasiva = True
-								ronda_champions = 3
-						elif(data[2] > ronda_champions):
-							print("[Champions]  Recibí ronda mayor a la mia",ronda_champions, data[2])
-							soy_pasiva = True
-							ronda_champions = 3
+								recibir_dump(data) # Falta implementar
+
+							elif(data[0] == 0): # OpCode es yo quiero
+								recibido = 1
+								if(data[2] == ronda_champions): # Comparo ronda
+									if( mi_mac > data[1]):
+										ronda_champions+=1
+									else:	
+										print ("Segundo if")
+										soy_pasiva = True
+										ronda_champions = 3
+								elif(data[2] > ronda_champions):
+									print ("Tercer if")
+									soy_pasiva = True
+									ronda_champions = 3
+						else:
+							mio = 1	
+
 				except:
 					pass
+
+				
 			recibido = 0
 		mio = 0
 		
@@ -369,13 +379,13 @@ def champions():
 	if(soy_pasiva==True):
 		pass
 	else:
-		paquete_bcast = struct.pack(formatoBcast,0, mi_mac,ronda_champions)
+		paquete_bcast = struct.pack(formato,0, mi_mac,ronda_champions)
 		socket_champions.sendto(paquete_bcast, server_address) ### Revisar esto
-		hiloTimeOut = threading.Thread(target=chamTimeOut,args=(1,),name='[Timeout]') 
+		hiloTimeOut = threading.Thread(target=chamTimeOut,args=(1,),name='[TimeOut]') 
 		hiloTimeOut.start()
 		while (championsTimeOut == 0 and recibido == 0 and soy_pasiva == True):
 			try:
-				data, _ = socket_champions.recvfrom(BUFFER_SIZE)
+				data, _address = socket_champions.recvfrom(BUFFER_SIZE)
 				
 				if(data[0] == 0 and data[2]==ronda_champions): ##Revisar el paquete si es el que espero comparar Macs y revisar
 					recibido = 1
@@ -385,13 +395,14 @@ def champions():
 			except:
 				pass
 	
+	print ("despues del juail")
 	
-	if not (soy_pasiva):
+	if not(soy_pasiva):
 		soy_activa = True
 		dump1, dump2 = crearDump(huboCambio)
 		paqueteCambio = paquete_broadcast_ID_ID(2,tamanoTablaPaginas,tamanoTablaNodos,dump1,dump2)
 		socket_champions.sendto(paqueteCambio, server_address)
-		
+
 
 	socket_champions.close()
 
@@ -443,6 +454,7 @@ def printPaginas(tablaPaginas, tamanoTablaPaginas):
 	print("==============\n")	
 
 def getMAC():
+	print("MI MAC", uuid.getnode()  )
 	return uuid.getnode() 	
 
 def responderComando():
@@ -459,14 +471,16 @@ def responderComando():
 
 def soyActiva():
 
+	hiloNodos = threading.Thread(target=accionHiloNodos,name="[Broadcast]") # Encargado de escuchar broadcasts de los nodos
+	hiloNodos.start()
+
 	hiloKA = threading.Thread(target=comunicacionIDs,name='[KeepAlive]') #Encargado de la comunicacion entre IDs
 	hiloKA.start()
 
 	hiloPrincipal = threading.Thread(target=accionHiloPrincipal,name='[Principal]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloPrincipal.start()
 	
-	hiloNodos = threading.Thread(target=accionHiloNodos,name="[Broadcast]") # Encargado de escuchar broadcasts de los nodos
-	hiloNodos.start()
+	
 
 def paquete_broadcast_ID_ID(op_code, fila1, fila2, dump1, dump2):
 	if (fila1 or fila2 > 0): # Hay Cambios
@@ -539,8 +553,9 @@ def crearDump(huboCambio):
 def comunicacionIDs():
 	global huboCambio, tamanoTablaPaginas, tamanoTablaNodos
 	sock_comunicacion = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
+	sock_comunicacion.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	sock_comunicacion.setblocking(0)
+
 	server_address = (RED_LAB, PORT_ID_ID)
 	sock_comunicacion.bind(server_address)
 
