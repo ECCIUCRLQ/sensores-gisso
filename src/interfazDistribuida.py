@@ -18,8 +18,10 @@ quieren_pelea = -1
 mi_mac = -1
 ronda_champions = 0
 soy_activa = False
+soy_pasiva = False
 hay_activa = False
 huboCambio = 0
+championsTimeOut = 0
 # IPs
 RED_LAB = '127.0.0.1'
 IPActiva = '127.0.0.1'
@@ -278,41 +280,84 @@ def recibir_dump(tabla):
 def recibir_parte(data):
 	pass
 
+def chamTimeOut(segundos):
+	global chamTimeOut
+	time.sleep(segundos)
+	championsTimeOut = 1
+
 def champions():
-	global quieren_pelea, mi_mac, ronda_champions, soy_activa, hay_activa
+	global quieren_pelea, mi_mac, ronda_champions, soy_activa, hay_activa championsTimeOut, soy_pasiva
 	mi_mac = getMAC().to_bytes(6,'little')
+	recibido = 0
 
 	socket_champions = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	socket_champions.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+	socket_champions.setblocking(0)
 
 	server_address = (RED_LAB, PORT_ID_ID)
 	formatoBcast = '=B6sB'
 	socket_champions.bind(server_address)
-	while True:
+	hiloTimeOut = threading.Thread(target=chamTimeOut,args=(3,),name='[TimeOut]') #Encargado de comunicar Local con Nodos y viceversa
+	hiloTimeOut.start()
+
+	while championsTimeOut==0 and soy_pasiva == False:
 		if not(hay_activa):
 			paquete_bcast = struct.pack(formatoBcast,0, mi_mac,ronda_champions)
 			socket_champions.sendto(paquete_bcast, server_address)
-			data, _ = socket_champions.recvfrom(BUFFER_SIZE)
+			while championsTimeOut==0 and recibido == 0:	
+				try:
+					data, address = socket_champions.recvfrom(BUFFER_SIZE)			
+					data = struct.unpack(formatoBcast, data)
+					
+					if(data[0] == 1):
+						recibido = 1
+						hay_activa = True
+						recibir_dump(data) # TODO = Falta implementar
 
-			if(data != 0):
-				data = struct.unpack(formatoBcast, data)
-				
-				if(data[0] == 1):
-					hay_activa = True
-					recibir_dump(data)
+					elif(data[0] == 0): # OpCode es yo quiero
+						recibido = 1
+						if(data[2] == ronda_champions): # Comparo ronda
+							if( mi_mac > data[1]):
+								ronda_champions+=1
+							else:	
+								soy_pasiva = True
+								ronda_champions = 3
+						elif(data[2] > ronda_champions):
+							soy_pasiva = True
+							ronda_champions = 3
 
-				elif(data[0] == 0): # OpCode es yo quiero
-					if(data[2] == ronda_champions): # Comparo ronda
-						if( mi_mac > data[1]):
-							ronda_champions+=1
-						else:	
-							soy_activa = False
-		else:
-			if not(soy_activa):
-				data, _ = socket_champions.recvfrom(BUFFER_SIZE)
-				if(data[0] == 2):
+				except:
 					pass
+			recibido = 0
 
+		else:
+			pass
+	
+	championsTimeOut = 0
+	if(soy_pasiva==True):
+		pass
+	
+	else:
+		paquete_bcast = struct.pack(formatoBcast,0, mi_mac,ronda_champions)
+		socket_champions.sendto(paquete_bcast, server_address) ### Revisar esto
+		hiloTimeOut = threading.Thread(target=chamTimeOut,args=(1,),name='[TimeOut]') 
+		hiloTimeOut.start()
+		while (championsTimeOut == 0 and recibido == 0 and soy_pasiva == True):
+			try:
+				data, address = sock.recvfrom(BUFFER_SIZE)
+				
+				if(data[0] == 0 and data[2]==ronda_champions): ##Revisar el paquete si es el que espero comparar Macs y revisar
+					recibido = 1
+					if(data[1] > mi_mac):
+						soy_pasiva = True
+					
+			except:
+				pass
+
+	if(soy_pasiva == True):
+		pass
+	else:
+		soy_activa = True
 
 	socket_champions.close()
 
