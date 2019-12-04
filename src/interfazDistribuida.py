@@ -57,7 +57,7 @@ def sendTCPNodo(paquete, IP_Nodo):
 			try:
 				socket_send.connect((IP_Nodo, PORT_ID_NM))
 				socket_send.sendall(paquete)
-				data,address = socket_send.recvfrom(BUFFER_SIZE)
+				data,_ = socket_send.recvfrom(BUFFER_SIZE)
 				if(data != 0):
 					packRetorno = data
 					socket_send.close()
@@ -292,7 +292,7 @@ def champions():
 		if not(hay_activa):
 			paquete_bcast = struct.pack(formatoBcast,0, mi_mac,ronda_champions)
 			socket_champions.sendto(paquete_bcast, server_address)
-			data, address = socket_champions.recvfrom(BUFFER_SIZE)
+			data, _ = socket_champions.recvfrom(BUFFER_SIZE)
 
 			if(data != 0):
 				data = struct.unpack(formatoBcast, data)
@@ -309,7 +309,7 @@ def champions():
 							soy_activa = False
 		else:
 			if not(soy_activa):
-				data, address = socket_champions.recvfrom(BUFFER_SIZE)
+				data, _ = socket_champions.recvfrom(BUFFER_SIZE)
 				if(data[0] == 2):
 					pass
 
@@ -379,13 +379,22 @@ def responderComando():
 			pass
 
 def soyActiva():
+
+	comunicacionIDs()
+
 	hiloNodos = threading.Thread(target=accionHiloPrincipal,name='[Principal]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloNodos.start()
 	
 	hiloPrincipal = threading.Thread(target=accionHiloNodos,name="[Broadcast]") # Encargado de escuchar broadcasts de los nodos
 	hiloPrincipal.start()
 
-def comIds():
+def crearDump():
+	return 0
+
+def crearPaqueteCambio():
+	return 0
+
+def comunicacionIDs():
 	global huboCambio
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setblocking(0)
@@ -398,12 +407,13 @@ def comIds():
 			if(data[0] == 0):
 				data = struct.unpack(formatoBcast, data)
 				filas1 = struct.unpack("=B", data[1:2])[0]
+				
 				paqueteDump = crearDump()
 				sock.sendto(paqueteDump, address)
 		except:
 			print (threading.current_thread().name," Escuchando IDS nuevas")
 
-		if(huboCambio = 1):
+		if(huboCambio == 1):
 			paqueteCambio = crearPaqueteCambio()
 			sock.sendto(paqueteCambio, server_address)
 			huboCambio = 0
