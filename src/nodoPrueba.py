@@ -32,6 +32,6 @@ with conn:
 
 
 while(True):
-	data, addr = socketNodos.recvfrom(50) # buffer size
+	data, addr = socket_send.recvfrom(50) # buffer size
 	print ("Ya guarde")
 	print(data)

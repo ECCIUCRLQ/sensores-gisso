@@ -37,7 +37,7 @@ def enviar(var):
 		ready = select.select([sock], [], [], 5) #timeout de 5 segundos
 		
 		if ready[0]:
-			data, addr = sock.recvfrom(50) # buffer size 
+			data, _ = sock.recvfrom(50) # buffer size 
 			ACK = struct.unpack('BBBBB', data)
 			if randomId == ACK[0] :
 				check = 1

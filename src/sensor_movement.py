@@ -12,7 +12,7 @@ q = sysvmq.Queue(2)                     		  # Crea el buzon con la llave 2
 
 while True:
 	if GPIO.input(pir):   						# Si detecto actividad en ese pin                        
-		print "Motion Detected!"
+		print ("Motion Detected!")
 		q.put(int(time.time()))					# Agrega el tiempo en que se detecto al buzon
 	else :
 		q.put(0)  								# Agrega 0 al buzon indicando que no se detecto movimiento, seria el keepalive
