@@ -250,7 +250,7 @@ def escucharML():
 	
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socketMLocal:
 			socketMLocal.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-			socketMLocal.bind(('10.1.137.17', PORT_ID_ML))
+			socketMLocal.bind(('', PORT_ID_ML))
 			socketMLocal.listen()
 			conn, addr = socketMLocal.accept()##Movi esto 2 lineas mas arriba
 			print("Conectado con: ",addr)
@@ -326,7 +326,7 @@ def champions():
 
 	server_address = (RED_LAB, PORT_ID_ID)
 	formato = '=B6sB'
-	socket_champions.bind(('10.1.137.17',PORT_ID_ID))
+	socket_champions.bind(('',PORT_ID_ID))
 	hiloTimeOut = threading.Thread(target=chamTimeOut,args=(3,),name='[Timeout]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloTimeOut.start()
 
@@ -413,7 +413,7 @@ def accionHiloNodos():
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setblocking(0)
 
-	sock.bind(('10.1.137.17', PORT_NM_ID))
+	sock.bind(('', PORT_NM_ID))
 
 	while True:
 		try:
@@ -556,7 +556,7 @@ def comunicacionIDs():
 	sock_comunicacion.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	sock_comunicacion.setblocking(0)
 	server_address = (RED_LAB, PORT_ID_ID)
-	sock_comunicacion.bind(('10.1.137.17', PORT_ID_ID))
+	sock_comunicacion.bind(('', PORT_ID_ID))
 
 	huboCambio = 0
 
@@ -604,7 +604,7 @@ def soyPasiva():
 	socket_pasiva.setblocking(0)
 
 
-	socket_pasiva.bind(('10.1.137.17', PORT_ID_ID))
+	socket_pasiva.bind(('', PORT_ID_ID))
 	
 	contadorNoLlego = 0
 	while activaViva:
