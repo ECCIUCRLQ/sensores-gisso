@@ -19,7 +19,7 @@ mi_mac = -1
 ronda_champions = 0
 soy_activa = False
 hay_activa = False
-
+huboCambio = 0
 # IPs
 RED_LAB = '127.0.0.1'
 IPActiva = '127.0.0.1'
@@ -386,6 +386,7 @@ def soyActiva():
 	hiloPrincipal.start()
 
 def comIds():
+	global huboCambio
 	sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock.setblocking(0)
 	server_address = (RED_LAB, PORT_ID_ID)
@@ -397,7 +398,7 @@ def comIds():
 			if(data[0] == 0):
 				data = struct.unpack(formatoBcast, data)
 				filas1 = struct.unpack("=B", data[1:2])[0]
-				paqueteDump = crearDump();
+				paqueteDump = crearDump()
 				sock.sendto(paqueteDump, address)
 		except:
 			print (threading.current_thread().name," Escuchando IDS nuevas")
@@ -405,10 +406,11 @@ def comIds():
 		if(huboCambio = 1):
 			paqueteCambio = crearPaqueteCambio()
 			sock.sendto(paqueteCambio, server_address)
+			huboCambio = 0
 		else:
 			paqueteKeepAlive = struct.pack('=BB',2,0)
 			sock.sendto(paqueteKeepAlive, server_address)
-			
+		time.sleep(2)	
 	sock.close()
 
 def iniciarHilos():
