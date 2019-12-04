@@ -184,7 +184,7 @@ def mandarAGuardar(numeroNodo, packAGuardar):
 	while True: # Enviar a guardar
 		try:
 			packRecibido = sendTCPNodo(packAGuardar, ipNodo) #Podria recibir 0
-			datosPack = struct.unpack('=BBI',packRecibido)
+			datosPack = struct.unpack('=B6sB',packRecibido)
 			
 			opCode = datosPack[0] #Si todo sale bien
 			id_pagina = datosPack[1]
@@ -342,32 +342,30 @@ def champions():
 			while championsTimeOut==0 and recibido == 0:	
 				try:
 					data, _address = socket_champions.recvfrom(BUFFER_SIZE)
-					if( data != 0):	
-						data = struct.unpack(formato, data)		
-						if not(data[1] == mi_mac):
+					data = struct.unpack(formato, data)	
+					if( (data != 0) and (data[1] == mi_mac) ):		
+						if(data[0] == 1):
+							recibido = 1
+							print("[Champions]  Recibí yo soy activa")
+							soy_pasiva = True
+							recibir_dump(data) # Falta implementar
 
-							if(data[0] == 1):
-								recibido = 1
-								print("[Champions]  Recibí yo soy activa")
-								soy_pasiva = True
-								recibir_dump(data) # Falta implementar
-
-							elif(data[0] == 0): # OpCode es yo quiero
-								recibido = 1
-								if(data[2] == ronda_champions): # Comparo ronda
-									if( mi_mac > data[1]):
-										print("[Champions]  Gané en ronda: ",ronda_champions)
-										ronda_champions+=1
-									else:	
-										print("[Champions]  Perdí en ronda",ronda_champions)
-										soy_pasiva = True
-										ronda_champions = 3
-								elif(data[2] > ronda_champions):
-									print("[Champions]  Voy atrasado")
+						elif(data[0] == 0): # OpCode es yo quiero
+							recibido = 1
+							if(data[2] == ronda_champions): # Comparo ronda
+								if( mi_mac > data[1]):
+									print("[Champions]  Gané en ronda: ",ronda_champions)
+									ronda_champions+=1
+								else:	
+									print("[Champions]  Perdí en ronda",ronda_champions)
 									soy_pasiva = True
 									ronda_champions = 3
-						else:
-							mio = 1	
+							elif(data[2] > ronda_champions):
+								print("[Champions]  Voy atrasado")
+								soy_pasiva = True
+								ronda_champions = 3
+					else:
+						mio = 1	
 
 				except:
 					pass
@@ -563,8 +561,8 @@ def comunicacionIDs():
 	while True:
 		try:
 			data, address = sock_comunicacion.recvfrom(BUFFER_SIZE)
+			data = struct.unpack('=BBB', data)
 			if(data[0] == 0): # Recibir yo quiero ser activa cuando soy activa
-				data = struct.unpack(formatoBcast, data)
 				dump1, dump2 = crearDump(0)
 				paqueteDump = paquete_broadcast_ID_ID(1,tamanoTablaPaginas, tamanoTablaNodos, dump1, dump2)
 				sock_comunicacion.sendto(paqueteDump, address)
