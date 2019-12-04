@@ -489,9 +489,9 @@ def paquete_broadcast_ID_ID(op_code, fila1, fila2, dump1, dump2):
 		return paquete
 		
 	else: # No hay cambios
-		formato = '=BBB'
+		formato = '=BBBBB'
 		
-		paquete = struct.pack(formato, op_code, fila1,fila2)
+		paquete = struct.pack(formato, op_code, fila1,fila2,0,0)
 
 		return paquete
 
