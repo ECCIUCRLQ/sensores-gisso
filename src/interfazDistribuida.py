@@ -303,18 +303,23 @@ def champions():
 	hiloTimeOut = threading.Thread(target=chamTimeOut,args=(3,),name='[TimeOut]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloTimeOut.start()
 
+	mio = 0
 
 	print ("antes del juail")
 	while championsTimeOut==0 and soy_pasiva == False:
 		if not(soy_pasiva):
-			paquete_bcast = struct.pack(formatoBcast,0, mi_mac,ronda_champions)
-			socket_champions.sendto(paquete_bcast, server_address)
+			if(mio == 0):
+				paquete_bcast = struct.pack(formatoBcast,0, mi_mac,ronda_champions)
+				socket_champions.sendto(paquete_bcast, server_address)
+
 			while championsTimeOut==0 and recibido == 0:	
 				try:
 					data, _ = socket_champions.recvfrom(BUFFER_SIZE)			
 					data = struct.unpack(formatoBcast, data)
-					
-					if(data[0] == 1):
+					if(data[1] == mi_mac):
+						mio = 1
+
+					elif(data[0] == 1):
 						recibido = 1
 						print ("Primer if")
 						soy_pasiva = True
@@ -337,7 +342,8 @@ def champions():
 				except:
 					pass
 			recibido = 0
-	
+		mio = 0
+		
 	championsTimeOut = 0
 	if(soy_pasiva==True):
 		pass
