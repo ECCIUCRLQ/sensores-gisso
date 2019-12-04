@@ -390,7 +390,7 @@ def champions():
 					recibido = 1
 					if(data[1] > mi_mac):
 						print("[Champions]  Gané en tiempos extra",ronda_champions)
-						soy_pasiva = True
+						soy_pasiva = False
 					
 			except:
 				pass
