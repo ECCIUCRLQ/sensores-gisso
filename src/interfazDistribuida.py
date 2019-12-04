@@ -23,6 +23,8 @@ ronda_champions = 0
 soy_activa = False
 soy_pasiva = False
 hay_activa = False
+
+activaViva = True
 huboCambio = 0
 championsTimeOut = 0
 contadorCambiosPagina = 0
@@ -524,29 +526,40 @@ def comunicacionIDs():
 			paqueteKeepAlive = paquete_broadcast_ID_ID(2,0,0,0,0)
 			sock.sendto(paqueteKeepAlive, server_address)
 			print (threading.current_thread().name," Estoy vivo")
-		time.sleep(2)	
+		time.sleep(1)	
 	sock.close()
 
+def pasivaTimeout(segundos):
+	global activaViva
+
+	print(threading.current_thread().name," Empieza KA Timeout")
+	time.sleep(segundos)
+	activaViva = False
+	print(threading.current_thread().name," Fin KA Timeout")
+
 def soyPasiva():
-	global tablaNodos, tablaPaginas, tamanoTablaNodos, tamanoTablaPaginas
+	global tablaNodos, tablaPaginas, tamanoTablaNodos, tamanoTablaPaginas, activaViva
 	
 	socket_pasiva = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	socket_pasiva.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-	socket_pasiva.settimeout(2)
+	socket_pasiva.setblocking(0)
+
 	server_address = (RED_LAB, PORT_ID_ID)
 	formatoBcast = '=B6sB'
 	
 	socket_pasiva.bind(server_address)
 	
-	
-	estaViva = True
-	while estaViva:
+
+#	hiloTimeout = threading.Thread(target=pasivaTimeout,args=(2,),name='[KA Timeout]')
+#	hiloTimeout.start() 
+	while activaViva:
 		try:
+			socket_pasiva.settimeout(2)
 			data, _ = socket_pasiva.recvfrom(BUFFER_SIZE)
 			data = struct.unpack(formatoBcast, data)	
 			
 			if( data[0] == 2): # llego KeepAlive
-				estaViva = True
+				activaViva = True
 				if( data[1] != 0 or data[2] != 0 ): # trae datos
 					filaPaginasCambiadas = data[1]
 					filasNodosCambiadas = data[2]
@@ -564,7 +577,9 @@ def soyPasiva():
 						tamanoTablaNodos+=1
 
 		except:
-			estaViva = False # Despues de esperar dos segundos no llego keepalive, se murio
+			time.sleep(1)
+			
+			# Falta empezar cuenta de dos segundos cuando no se recibe KeepAlive
 			pass
 	
 	
