@@ -526,6 +526,9 @@ def crearDump(huboCambio):
 			for i in range(4):
 				dump2.append(tamanoNodo[i])	
 	
+	contadorCambiosNodo = contadorCambiosPagina = 0
+	cambiosPagina = cambiosNodo = []
+
 	return dump1, dump2	
 
 def comunicacionIDs():
@@ -549,7 +552,7 @@ def comunicacionIDs():
 
 		if(huboCambio == 1):
 			dump1, dump2 = crearDump(huboCambio)
-			paqueteCambio = paquete_broadcast_ID_ID(2,tamanoTablaPaginas,tamanoTablaNodos,0,0)
+			paqueteCambio = paquete_broadcast_ID_ID(2,contadorCambiosPagina,contadorCambiosNodo,dump1,dump2)
 			sock.sendto(paqueteCambio, server_address)
 			huboCambio = 0
 			print (threading.current_thread().name," Actualizando datos")
@@ -595,7 +598,7 @@ def soyPasiva():
 		except:
 			time.sleep(1)
 			
-			# Falta empezar cuenta de dos segundos cuando no se recibe KeepAlive
+			#TODO Falta empezar cuenta de dos segundos cuando no se recibe KeepAlive
 			pass
 	
 
