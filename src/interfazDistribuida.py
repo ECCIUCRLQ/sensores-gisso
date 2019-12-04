@@ -9,6 +9,7 @@ import time
 import sys
 import uuid 
 import os
+import select
 
 # Variables Globales
 tablaNodos = [] 			# Columnas: NumeroNodo | IP | EspacioDisponible
@@ -24,8 +25,10 @@ soy_activa = False
 soy_pasiva = False
 hay_activa = False
 
+contadorNoLlego = 0
+
 activaViva = True
-siLlego = False
+siLlego = True
 huboCambio = 0
 championsTimeOut = 0
 
@@ -247,7 +250,7 @@ def escucharML():
 	
 	with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as socketMLocal:
 			socketMLocal.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-			socketMLocal.bind(('127.0.0.1', PORT_ID_ML))
+			socketMLocal.bind(('', PORT_ID_ML))
 			socketMLocal.listen()
 			conn, addr = socketMLocal.accept()##Movi esto 2 lineas mas arriba
 			print("Conectado con: ",addr)
@@ -314,6 +317,7 @@ def champions():
 	global quieren_pelea, mi_mac, ronda_champions, soy_activa, championsTimeOut, soy_pasiva
 	mi_mac = getMAC().to_bytes(6,'little')
 	recibido = 0
+	soy_pasiva = False
 
 	socket_champions = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	socket_champions.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -323,7 +327,7 @@ def champions():
 	server_address = (RED_LAB, PORT_ID_ID)
 	formato = '=B6sB'
 	socket_champions.bind(server_address)
-	hiloTimeOut = threading.Thread(target=chamTimeOut,args=(3,),name='[TimeOut]') #Encargado de comunicar Local con Nodos y viceversa
+	hiloTimeOut = threading.Thread(target=chamTimeOut,args=(3,),name='[Timeout]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloTimeOut.start()
 
 	mio = 0
@@ -474,8 +478,6 @@ def soyActiva():
 	hiloPrincipal = threading.Thread(target=accionHiloPrincipal,name='[Principal]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloPrincipal.start()
 	
-	
-
 def paquete_broadcast_ID_ID(op_code, fila1, fila2, dump1, dump2):
 	if (fila1 or fila2 > 0): # Hay Cambios
 		formato = '=BBB'
@@ -496,6 +498,8 @@ def paquete_broadcast_ID_ID(op_code, fila1, fila2, dump1, dump2):
 def crearDump(huboCambio):
 	global tamanoTablaNodos, tamanoTablaPaginas, tablaPaginas, tablaNodos
 	global contadorCambiosNodo, contadorCambiosPagina, cambiosNodo, cambiosPagina
+
+	print("						Creando dump")
 
 	dump1 = bytearray()
 	dump2 = bytearray()
@@ -548,10 +552,11 @@ def comunicacionIDs():
 	global huboCambio, tamanoTablaPaginas, tamanoTablaNodos
 	sock_comunicacion = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock_comunicacion.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-	sock_comunicacion.setblocking(0)
 
 	server_address = (RED_LAB, PORT_ID_ID)
 	sock_comunicacion.bind(server_address)
+
+	huboCambio = 0
 
 	while True:
 		try:
@@ -578,12 +583,15 @@ def comunicacionIDs():
 	sock_comunicacion.close()
 
 def pasivaTimeout(segundos):
-	global activaViva
+	global activaViva, contadorNoLlego
 
 	print(threading.current_thread().name," Empieza KA Timeout")
 	time.sleep(segundos)
 	if not(siLlego):
-		activaViva = False
+		contadorNoLlego+=1
+
+	if(contadorNoLlego == 2):
+		activaViva = False	
 	print(threading.current_thread().name," Fin KA Timeout")
 
 def soyPasiva():
@@ -594,45 +602,47 @@ def soyPasiva():
 	socket_pasiva.setblocking(0)
 
 	server_address = (RED_LAB, PORT_ID_ID)
-	formatoBcast = '=B6sB'
+
 	
+
 	socket_pasiva.bind(server_address)
 	
-	hiloTimeout = threading.Thread(target=pasivaTimeout,args=(4,),name='[KA Timeout]')
-
+	contadorNoLlego = 0
 	while activaViva:
-		try:
-			data, _ = socket_pasiva.recvfrom(BUFFER_SIZE)
-			data = struct.unpack(formatoBcast, data)	
+		llego = select.select([socket_pasiva],[],[],5)
+		if(llego[0]):
+			try:
+				data, _address = socket_pasiva.recvfrom(BUFFER_SIZE)
+				data = struct.unpack('=BBBBB', data)	
+				
+				if( data[0] == 2): # llego KeepAlive
+					contadorNoLlego = 0
+					print(threading.current_thread().name," Llego KA")
+					if( data[1] != 0 or data[2] != 0 ): # trae datos
+						recibir_dump(data)
+
+			except:
+				print(threading.current_thread().name," No llego KA",contadorNoLlego)
+		else:
+			activaViva=False
 			
-			if( data[0] == 2): # llego KeepAlive
-				siLlego = True
-				if( data[1] != 0 or data[2] != 0 ): # trae datos
-					recibir_dump(data)
-
-		except:
-			if (siLlego):
-				hiloTimeout.start() 
-			siLlego = False
-			time.sleep(2)
-	
-
+			
 	socket_pasiva.close()
-	iniciarInterfaz()
 
 def iniciarInterfaz():
 	global soy_activa
 
-	champions()
-	if(soy_activa):
-		print ("[Principal]  Soy activa")
-		#os.system('ifconfig eth0 down')
-		#os.system('ifconfig eth0 ' + str(IPActiva))
-		#os.system('ifconfig eth0 up')
-		soyActiva()
-	else:
-		print ("[Principal]  Soy pasiva")
-		soyPasiva()
+	while True:
+		champions()
+		if(soy_activa):
+			print ("[Principal]  Soy activa")
+			#os.system('ifconfig eth0 down')
+			#os.system('ifconfig eth0 ' + str(IPActiva))
+			#os.system('ifconfig eth0 up')
+			soyActiva()
+		else:
+			print ("[Principal]  Soy pasiva")
+			soyPasiva()
 
 
 iniciarInterfaz()
