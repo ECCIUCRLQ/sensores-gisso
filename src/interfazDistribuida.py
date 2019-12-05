@@ -117,7 +117,9 @@ def buscarIP(ipNodo):
 
 def agregarNodoTabla(ipNodo, espacioNodo):
 	global numeroNodo,tablaNodos,tamanoTablaNodos, cambiosNodo
-	
+	global huboCambio, cambiosNodo, contadorCambiosNodo
+
+
 	if not ( buscarIP(ipNodo) ):
 		tablaNodos.append([])
 		tablaNodos[tamanoTablaNodos].append(numeroNodo)
@@ -125,9 +127,17 @@ def agregarNodoTabla(ipNodo, espacioNodo):
 		tablaNodos[tamanoTablaNodos].append(ipNodo)
 		tablaNodos[tamanoTablaNodos].append(espacioNodo)
 	
+		cambiosNodo.append([])
+		cambiosNodo[contadorCambiosNodo].append(numeroNodo)
+	
+		cambiosNodo[contadorCambiosNodo].append(ipNodo)
+		cambiosNodo[contadorCambiosNodo].append(espacioNodo)
+
 		print(threading.current_thread().name," Se agregó en la tabla",tablaNodos)
 		numeroNodo += 1
 		tamanoTablaNodos += 1
+		contadorCambiosNodo+=1
+		huboCambio = 1
 	else:	
 		print(threading.current_thread().name," Ya está en la tabla: agregarNodoTabla")
 		
@@ -156,15 +166,32 @@ def buscaNodo (numeroNodo):
 		i += 1
 	return indiceNodo
 
-def actualizarDatos(indiceNodo, id_pagina, espacioDisponibleRecibido, numeroNodo):
+def actualizarDatos(indiceNodo, id_pagina, espacioDisponibleRecibido, numeroNodo, ipNodo):
 	global tablaNodos, tablaPaginas, tamanoTablaPaginas, tablaPaginas
+	global huboCambio, cambiosNodo, cambiosPagina, contadorCambiosNodo, contadorCambiosPagina
 
 	tablaNodos[indiceNodo][2] = espacioDisponibleRecibido
 	
+	cambiosNodo.append([])
+	cambiosNodo[contadorCambiosNodo].append(indiceNodo)
+	cambiosNodo[contadorCambiosNodo].append(ipNodo)
+	cambiosNodo[contadorCambiosNodo].append(espacioDisponibleRecibido)
+
+	contadorCambiosNodo+=1
+	huboCambio = 1
+
 	tablaPaginas.append([])
 	tablaPaginas[tamanoTablaPaginas].append(id_pagina)
 	tablaPaginas[tamanoTablaPaginas].append(numeroNodo)
+
+	cambiosPagina.append([])
+	cambiosPagina[contadorCambiosPagina].append(id_pagina)
+	cambiosPagina[contadorCambiosPagina].append(numeroNodo)
+
 	tamanoTablaPaginas+=1
+	contadorCambiosPagina+=1
+
+	huboCambio = 1
 	print(threading.current_thread().name," Tabla Paginas: ",tablaPaginas)
 	
 def mandarAGuardar(numeroNodo, packAGuardar):
@@ -192,7 +219,7 @@ def mandarAGuardar(numeroNodo, packAGuardar):
 			print(threading.current_thread().name," Me retorno", datosPack,opCode)
 			if( opCode == 2 ): #La condicion de este if puede cambiar a la vara del opCode (2), tambien se pude ver como el "Todo salio bien"
 				print(threading.current_thread().name," Se guardo bien")
-				actualizarDatos(indiceNodo,id_pagina, espacioDisponibleRecibido, numeroNodo)
+				actualizarDatos(indiceNodo,id_pagina, espacioDisponibleRecibido, numeroNodo, ipNodo)
 				print(threading.current_thread().name," Paso actualizarDatos?")
 				break
 		except:
@@ -318,8 +345,6 @@ def recibir_dump(data):
 		else:
 			tablaNodos[posicion][2] = dump2[index][2]
 		
-
-
 def chamTimeOut(segundos):
 	global championsTimeOut
 
@@ -488,8 +513,6 @@ def soyActiva():
 	hiloNodos = threading.Thread(target=accionHiloNodos,name="[Broadcast]") # Encargado de escuchar broadcasts de los nodos
 	hiloNodos.start()
 
-	
-
 	hiloPrincipal = threading.Thread(target=accionHiloPrincipal,name='[Principal]') #Encargado de comunicar Local con Nodos y viceversa
 	hiloPrincipal.start()
 	
@@ -558,13 +581,11 @@ def crearDump(huboCambio):
 			for i in range(4):
 				dump2.append(tamanoNodo[i])	
 	
-	contadorCambiosNodo = contadorCambiosPagina = 0
-	cambiosPagina = cambiosNodo = []
-
 	return dump1, dump2	
 
 def comunicacionIDs():
 	global huboCambio, tamanoTablaPaginas, tamanoTablaNodos
+	global contadorCambiosNodo, contadorCambiosPagina, cambiosPagina, cambiosNodo
 	sock_comunicacion = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	sock_comunicacion.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	sock_comunicacion.setblocking(0)
@@ -589,6 +610,8 @@ def comunicacionIDs():
 			paqueteCambio = paquete_broadcast_ID_ID(2,contadorCambiosPagina,contadorCambiosNodo,dump1,dump2)
 			sock_comunicacion.sendto(paqueteCambio, server_address)
 			huboCambio = 0
+			contadorCambiosNodo = contadorCambiosPagina = 0
+			cambiosPagina = cambiosNodo = []
 			print (threading.current_thread().name," Actualizando datos")
 		else:
 			paqueteKeepAlive = paquete_broadcast_ID_ID(2,0,0,0,0)
@@ -596,18 +619,6 @@ def comunicacionIDs():
 			print (threading.current_thread().name," Estoy vivo")
 		time.sleep(2)	
 	sock_comunicacion.close()
-
-def pasivaTimeout(segundos):
-	global activaViva, contadorNoLlego
-
-	print(threading.current_thread().name," Empieza KA Timeout")
-	time.sleep(segundos)
-	if not(siLlego):
-		contadorNoLlego+=1
-
-	if(contadorNoLlego == 2):
-		activaViva = False	
-	print(threading.current_thread().name," Fin KA Timeout")
 
 def soyPasiva():
 	global tablaNodos, tablaPaginas, tamanoTablaNodos, tamanoTablaPaginas, activaViva, siLlego
