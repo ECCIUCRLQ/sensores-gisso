@@ -283,7 +283,17 @@ def escucharML():
 #		0 -> Quiero ser
 #		1 -> Soy activa
 #		2 -> KeepAlive
-		
+
+def yaEsta(nodoID):
+	esta  = False
+	posicion = 0
+
+	for index in range(tamanoTablaNodos):
+		if(tablaNodos[index][0] == nodoID):
+			esta = True
+			posicion = index
+	return esta, posicion
+
 def recibir_dump(data):
 	global tablaPaginas, tablaNodos, tamanoTablaPaginas, tamanoTablaNodos
 
@@ -299,10 +309,15 @@ def recibir_dump(data):
 		tamanoTablaPaginas+=1				
 
 	for index in range(filasNodosCambiadas):
-		tablaNodos.append([])
-		for jindex in range(3):
-			tablaNodos[tamanoTablaNodos].append(dump2[index][jindex])
-		tamanoTablaNodos+=1
+		esta, posicion = yaEsta(dump2[index][0])
+		if not (esta):
+			tablaNodos.append([])
+			for jindex in range(3):
+				tablaNodos[tamanoTablaNodos].append(dump2[index][jindex])
+			tamanoTablaNodos+=1	
+		else:
+			tablaNodos[posicion][2] = dump2[index][2]
+		
 
 
 def chamTimeOut(segundos):
