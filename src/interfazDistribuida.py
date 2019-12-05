@@ -623,6 +623,8 @@ def comunicacionIDs():
 def soyPasiva():
 	global tablaNodos, tablaPaginas, tamanoTablaNodos, tamanoTablaPaginas, activaViva, siLlego
 	
+	time.sleep(4) # Esperar en caso de que aun no se haya decidido la activa
+
 	socket_pasiva = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	socket_pasiva.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	socket_pasiva.setblocking(0)
